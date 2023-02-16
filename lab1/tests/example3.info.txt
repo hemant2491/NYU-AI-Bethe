@@ -1,0 +1,31 @@
+# max -v
+max(d) chooses h for 10
+max(e) chooses i for 15
+min(b) chooses d for 10
+max(e) chooses i for 15
+max(f) chooses j for 20
+min(c) chooses e for 15
+max(a) chooses c for 15
+
+# min -v
+min(d) chooses g for 5
+min(e) chooses h for 10
+max(b) chooses e for 10
+min(e) chooses h for 10
+min(f) chooses i for 15
+max(c) chooses f for 15
+min(a) chooses b for 10
+
+# max -ab -v
+max(d) chooses h for 10
+min(b) chooses d for 10
+max(e) chooses i for 15
+min(c) chooses e for 15
+max(a) chooses c for 15
+
+# min -ab -v
+min(d) chooses g for 5
+min(e) chooses h for 10
+max(b) chooses e for 10
+min(e) chooses h for 10
+min(a) chooses b for 10

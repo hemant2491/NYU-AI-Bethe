@@ -1,0 +1,3 @@
+# no root node, both b and c are without parent
+
+multiple roots: "b" and "c"

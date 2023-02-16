@@ -1,0 +1,26 @@
+# max
+max(a) chooses a2 for 2
+
+# min
+min(a) chooses a1 for 3
+
+# max -v
+min(a1) chooses b for -4
+min(a2) chooses b29 for 2
+min(a3) chooses xy for -1
+max(a) chooses a2 for 2
+
+# min -v 
+max(a1) chooses c for 3
+max(a2) chooses b19 for 5
+max(a3) chooses wx for 8
+min(a) chooses a1 for 3
+
+# min -ab -v
+max(a1) chooses c for 3
+min(a) chooses a1 for 3
+
+# max -ab -v
+min(a1) chooses b for -4
+min(a2) chooses b29 for 2
+max(a) chooses a2 for 2
