@@ -1,0 +1,24 @@
+# this is another DAG, that can be run with N of 10
+
+# max -v 10
+min(a1) chooses b for -10
+min(a2) chooses g for -3
+min(a3) chooses y for -1
+max(a) chooses a3 for -1
+
+# min -v 10
+max(a1) chooses c for 10
+max(a2) chooses h for 7
+max(a3) chooses z for 8
+min(a) chooses a2 for 7
+
+# max -v -ab 10
+min(a1) chooses b for -10
+min(a2) chooses g for -3
+min(a3) chooses y for -1
+max(a) chooses a3 for -1
+
+# min -v -ab 10
+max(a1) chooses c for 10
+max(a2) chooses h for 7
+min(a) chooses a2 for 7
