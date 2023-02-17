@@ -90,24 +90,32 @@ void LogOutput(bool isMax, string parent, string child, int val) {
     }
 }
 
-int Minimax(string currentPlayer, int maxVal, bool isAbPruning, int alpha, int beta, bool isMaxPlayer, bool isRoot, bool isVerbose) {
+int Minimax(string currentPlayer, int maxLimit, bool isAbPruning, int alpha, int beta, bool isMaxPlayer, bool isRoot, bool isVerbose) {
     if (leaves.count(currentPlayer) > 0) {
         return leafValues[currentPlayer];
     }
+
+    int minLimit = -maxLimit;
 
     if (isMaxPlayer) {
         int maxValue = INT_MIN;
         int currentValue = maxValue;
         string chosenChild = "";
         for (string child : gameGraph[currentPlayer]) {
-            currentValue = Minimax(child, maxVal, isAbPruning, alpha, beta, !isMaxPlayer, false, isVerbose);
+            currentValue = Minimax(child, maxLimit, isAbPruning, alpha, beta, !isMaxPlayer, false, isVerbose);
             if (currentValue > maxValue) {
                 maxValue = currentValue;
                 chosenChild = child;
             }
+            if (currentValue >= maxLimit) { break;}
+            if (isAbPruning && currentValue > alpha) { alpha = currentValue;}
+            if (isAbPruning && beta <= alpha) { 
+                // printf("isAbPruning %s beta %d alpha %d\n", isAbPruning ? "true" : "false", beta, alpha);
+                break;
+            }
         }
 
-        if (isRoot || isVerbose) {
+        if (beta > alpha && (isRoot || isVerbose)) {
             LogOutput(isMaxPlayer, currentPlayer, chosenChild, maxValue);
         }
         return maxValue;
@@ -117,14 +125,23 @@ int Minimax(string currentPlayer, int maxVal, bool isAbPruning, int alpha, int b
         string chosenChild = "";
         for (string child : gameGraph[currentPlayer])
         {
-            currentValue = Minimax(child, maxVal, isAbPruning, alpha, beta, !isMaxPlayer, false, isVerbose);
+            currentValue = Minimax(child, maxLimit, isAbPruning, alpha, beta, !isMaxPlayer, false, isVerbose);
             if (currentValue < minValue) {
                 minValue = currentValue;
                 chosenChild = child;
             }
+            if (currentValue < minLimit) {
+                // printf("currentValue %d minLimit %d\n", currentValue, minLimit);
+                break;
+            }
+            if (isAbPruning && currentValue < beta) { beta = currentValue;}
+            if (isAbPruning && beta <= alpha) {
+                // printf("isAbPruning %s beta %d alpha %d\n", isAbPruning ? "true" : "false", beta, alpha);
+                break;
+            }
         }
 
-        if (isRoot || isVerbose) {
+        if (beta > alpha && (isRoot || isVerbose)) {
             LogOutput(isMaxPlayer, currentPlayer, chosenChild, minValue);
         }
         return minValue;
@@ -133,16 +150,17 @@ int Minimax(string currentPlayer, int maxVal, bool isAbPruning, int alpha, int b
 
 int main(int argc, char** argv) {
     
-    bool isVerbose = false;
-    bool isAbPruning = false;
-    int maxVal = INT_MAX;
-    bool isRootMax = true;
+    bool isVerbose = true;
+    bool isAbPruning = true;
+    int maxLimit = INT_MAX;
+    bool isMaxPlayer = true;
+    bool isRoot = true;
     string inputFile;
-    inputFile = "./tests/example1.txt";
+    inputFile = "./tests/example2.txt";
 
     string root = ReadInputFile(inputFile);
 
-    Minimax(root, maxVal, isAbPruning, INT_MAX, INT_MIN, isRootMax, true, isVerbose);
+    Minimax(root, maxLimit, isAbPruning, INT_MIN, INT_MAX, isMaxPlayer, isRoot, isVerbose);
 
     return 0;
 }
