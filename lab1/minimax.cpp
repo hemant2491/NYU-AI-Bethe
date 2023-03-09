@@ -13,12 +13,40 @@ using namespace std;
 unordered_map<string, vector<string>> gameGraph;
 unordered_set<string> leaves;
 unordered_map<string, int> leafValues;
- 
+
+void VisitChildren(unordered_set<string> visited, string parent, string grandParent) {
+    
+    if (visited.count(parent) > 0) {
+        cout << "cyclic graph at node " << parent.c_str() << endl;
+        exit(1);
+    } else {
+        visited.emplace(parent);
+        if (gameGraph.count(parent) > 0) {
+            for (auto i : gameGraph[parent]) {
+                VisitChildren(visited, i, parent);
+            }
+        } else {
+            if (leaves.count(parent) < 1) {
+                // child node "e" of "c" not found
+                printf("child node \"%s\" of \"%s\" not found\n", parent.c_str(), grandParent.c_str());
+                exit(1);
+            }
+        }
+    }
+}
+
+void ValidateDAG() {
+    unordered_set<string> visited;
+    for (auto element : gameGraph) {
+        visited.clear();
+        VisitChildren(visited, element.first, "");
+    }
+ }
 
 string ReadInputFile(string graphFile ) {
     
     string root = "";
-    ifstream fin;
+    ifstream fin(graphFile);
     string line;
 
     try
@@ -30,6 +58,11 @@ string ReadInputFile(string graphFile ) {
         printf("There was an error in opening input file %s: %s\n", graphFile.c_str(), e.what());
         exit(1);
     }
+
+    // if (fin.fail()) {
+    //     printf("Input file %s does not exist\n", graphFile.c_str());
+    //     exit(1);
+    // }
 
     while (fin) {
         // Read a line from input file
@@ -78,6 +111,7 @@ string ReadInputFile(string graphFile ) {
     }
 
     fin.close();
+    ValidateDAG();
     return root;
 }
 
@@ -150,15 +184,28 @@ int Minimax(string currentPlayer, int maxLimit, bool isAbPruning, int alpha, int
 
 int main(int argc, char** argv) {
     
-    bool isVerbose = true;
-    bool isAbPruning = true;
+    bool isVerbose = false;
+    bool isAbPruning = false;
     int maxLimit = INT_MAX;
     bool isMaxPlayer = true;
     bool isRoot = true;
     string inputFile;
-    inputFile = "./tests/example2.txt";
+    // inputFile = "./tests/example2.txt";
+    inputFile = string(argv[argc-1]);
+
+    for (int i = 1; i<argc; i++) {
+        string option(argv[i]);
+        // cout << option.c_str() << " ";
+        if ("-v" == option) { isVerbose = true;}
+        if ("-ab" == option) { isAbPruning = true;}
+        if ("min" == option) {isMaxPlayer == false;}
+        if (i == argc-3) { maxLimit = stoi(argv[i]);}
+    }
+    // cout << endl;
 
     string root = ReadInputFile(inputFile);
+
+    // printf("Running minimax with below parameters:\n isVerbose = %s,\n Alpha-Beta Pruning = %s,\n maxLimit = %d,\n isMaxPlayer = %s,\n root = %s,\n isRoot = %s\n", isVerbose ? "true" : "false", isAbPruning ? "true" : "false", maxLimit ,isMaxPlayer ? "true" : "false", root.c_str(), isRoot ? "true" : "false");
 
     Minimax(root, maxLimit, isAbPruning, INT_MIN, INT_MAX, isMaxPlayer, isRoot, isVerbose);
 

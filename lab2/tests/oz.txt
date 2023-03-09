@@ -1,0 +1,8 @@
+# australia
+
+WA : [NT, SA]
+NT : [SA, Q]
+Q : [SA, NSW]
+SA : [WA, NT, Q, NSW, V]
+NSW : [V, SA]
+T : []
