@@ -18,14 +18,16 @@
 #include <sys/stat.h>
 #include <vector>
 #include <unordered_map>
+#include <unordered_set>
 #include <fstream>
 #include <cstring>
 #include <algorithm>
 #include <set>
+#include <deque>
 
 using namespace std;
 
-bool VERBOSE = false;
+enum OP_TYPE{NOT, AND, OR};
 
 class Graph {
     public:
@@ -60,6 +62,51 @@ class Graph {
                 printf("\n");
             }
         }
+};
+
+class Atom {
+    public:
+        bool isOperation = false;
+        bool isSymbol = false;
+        // bool notFlag;
+        string symbol = "";
+        OP_TYPE type;
+        // char color;
+        Atom* next;
+        Atom* previous;
+
+        Atom(string _sym){
+            isSymbol = true;
+            symbol = _sym;
+        }
+
+        Atom(OP_TYPE _type){
+            isOperation = true;
+            type = _type;
+        }
+
+        void SetNext(Atom* _next){
+            next = _next;
+        }
+
+        void SetPrevious(Atom* _prev){
+            previous = _prev;
+        }
+
+        void Print(){
+            if (isSymbol) {
+                printf("Sym: %s ", symbol.c_str());
+            } else if (isOperation && type == OP_TYPE::AND){
+                printf("Op: ^ ");
+            } else if (isOperation && type == OP_TYPE::OR){
+                printf("OP: v ");
+            } else if (isOperation && type == OP_TYPE::NOT){
+                printf("OP: ! ");
+            } else {
+                printf("Unknown Atom: isOperation %s isSymbol %s symbol %s ", isOperation ? "true" : "false", isSymbol ? "true" : "false", symbol.c_str());
+            }
+        }
+        
 };
 
 // trim whitespace from start of string
@@ -136,6 +183,172 @@ Graph ParseInput(string inputFileName){
     graph.UpdateVertexCount();
     graph.Print();
     return graph;
+}
+
+inline vector<string> GetSymbolsWithColor(string node, int colorCount){
+    
+    const string colors[] = {"R", "B", "G", "Y"};
+    vector<string> symbols;
+    for (int i = 0; i<colorCount; i++){
+        symbols.push_back(node + "_" + colors[i]);
+    }
+    return symbols;
+}
+
+/* 
+For node WA with adjacent node NT and SA for 3 colors:
+1. Color(WA,R) v Color(WA,G) v Color(WA,B)
+2. Color(WA,R) =>¬[Color(NT,R) v Color(SA,R)] for each color
+    => ¬Color(WA,R) v ¬Color(NT,R)
+    => ¬Color(WA,R) v ¬Color(SA,R)
+3. Color(WA,R) =>¬[Color(WA,G) v Color(WA,B)] for each color pair
+    => ¬Color(WA,R) v ¬Color(WA,G)
+    => ¬Color(WA,R) v ¬Color(WA,B)
+ */
+
+void Visit(vector<string>* visited, string parentNode, vector<string>* adjNodes){
+
+}
+
+vector<vector<Atom>> GraphConstraints(Graph graph, int colorCount){
+    
+    int N = graph.nodes.size();
+    // string colors[] = {"R", "B", "G", "Y"};
+    vector<vector<Atom>> clauses;
+
+    unordered_map<string, bool> visited;
+    for (string node : graph.nodes) {
+        visited[node] = false;
+    }
+
+    deque<string> queue;
+
+    for (string node : graph.nodes) {
+        if(visited[node] == true) { continue;}
+
+        visited[node] = true;
+        if (graph.adjL.count(node) < 1) { continue;}
+
+        unordered_map<string, vector<string>> nodesToSymbolsWithColorName;
+        vector<string> adjNodes;
+        nodesToSymbolsWithColorName[node] = GetSymbolsWithColor(node, colorCount);
+        
+        for (auto adjNode : graph.adjL[node]){
+            queue.push_back(adjNode);
+            adjNodes.push_back(adjNode);
+            // visited[adjNode] = true;
+            nodesToSymbolsWithColorName[adjNode] = GetSymbolsWithColor(adjNode, colorCount);
+        }
+
+        vector<string> parentAllColorSymbols = nodesToSymbolsWithColorName[node];
+        vector<Atom> clause;
+        for (auto iter = parentAllColorSymbols.begin(); iter != parentAllColorSymbols.end(); ){
+            Atom a(*iter);
+            
+            iter++;
+            if(iter != parentAllColorSymbols.end()){
+                Atom op = Atom(OP_TYPE::OR);
+                a.SetNext(&op);
+                clause.push_back(a);
+                clause.push_back(op);
+            } else {
+                clause.push_back(a);
+            }
+        }
+        clauses.push_back(clause);
+        
+
+        for (auto iter = adjNodes.begin(); iter != adjNodes.end(); iter++){
+            for (int i = 0; i < colorCount; i++){
+                Atom not1(OP_TYPE::NOT);
+                Atom or1(OP_TYPE::OR);
+                Atom not2(OP_TYPE::NOT);
+                Atom parent(parentAllColorSymbols[i]);
+                Atom adj(nodesToSymbolsWithColorName[*iter][i]);
+
+                not1.SetNext(&parent);
+                parent.SetNext(&or1);
+                or1.SetNext(&not2);
+                not2.SetNext(&adj);
+
+                parent.SetPrevious(&not1);
+                or1.SetPrevious(&parent);
+                not2.SetPrevious(&or1);
+                adj.SetPrevious(&not2);
+
+                vector<Atom> clause2;
+                clause2.push_back(not1);
+                clause2.push_back(parent);
+                clause2.push_back(or1);
+                clause2.push_back(not2);
+                clause2.push_back(adj);
+
+                clauses.push_back(clause2);
+            }
+        }
+
+
+        for (int i = 0; i < colorCount; i++){
+            for (int j = i+1; j < colorCount; j++){
+                Atom color1(parentAllColorSymbols[i]);
+                Atom color2(parentAllColorSymbols[j]);
+                Atom not1(OP_TYPE::NOT);
+                Atom or1(OP_TYPE::OR);
+                Atom not2(OP_TYPE::NOT);
+
+                not1.SetNext(&color1);
+                color1.SetNext(&or1);
+                or1.SetNext(&not2);
+                not2.SetNext(&color2);
+
+                color1.SetPrevious(&not1);
+                or1.SetPrevious(&color1);
+                not2.SetPrevious(&or1);
+                color2.SetPrevious(&not2);
+
+                vector<Atom> clause3;
+                clause3.push_back(not1);
+                clause3.push_back(color1);
+                clause3.push_back(or1);
+                clause3.push_back(not2);
+                clause3.push_back(color2);
+
+                clauses.push_back(clause3);
+            }
+        }
+    }
+
+    return clauses;
+}
+
+void PrintClauses(vector<vector<Atom>> clauses, bool verbose){
+    for (auto iter = clauses.begin(); iter != clauses.end(); iter++){
+        for (auto iter2 = iter->begin(); iter2 != iter->end(); iter2++){
+            if (iter2->isSymbol){
+                printf("%s ", iter2->symbol.c_str());
+            } else {
+                if (iter2->type == OP_TYPE::OR){
+                    printf(" ");
+                } else if (iter2->type == OP_TYPE::NOT){
+                    printf("!");
+                } else if (iter2->type == OP_TYPE::AND){
+                    printf("^ ");
+                } else {
+                    printf("Incorrect Atom: ");
+                    iter2->Print();
+                }
+            }
+        }
+        printf("\n");
+    }
+
+}
+
+vector<vector<Atom>> DPLL(vector<vector<Atom>> clauses){
+
+}
+
+void ConvertBack(){
 
 }
 
@@ -144,13 +357,14 @@ int main(int argc, char** argv){
 
     int ncolors;
     string ncolorsStr, inputFile;
+    bool verbose = false;
 
     if(argc < 3 || argc > 4){
         PrintUsage("Incorrect number of program arguments " + to_string(argc));
     }
 
     if(argc == 4 && argv[1] == "-v"){
-        VERBOSE = true;
+        verbose = true;
     }
 
     if(argc == 4 && string(argv[1]) != "-v"){
@@ -183,7 +397,14 @@ int main(int argc, char** argv){
         exit(1);
     }
 
-    ParseInput(inputFile);
+    Graph graph = ParseInput(inputFile);
+
+    vector<vector<Atom>> clauses = GraphConstraints(graph, ncolors);
+    PrintClauses(clauses, verbose);
+
+    // vector<vector<Atom>> assignments = DPLL(clauses);
+
+    // solution = convertBack(assignments)
     
     return 0;
 }
