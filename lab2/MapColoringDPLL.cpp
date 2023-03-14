@@ -206,116 +206,117 @@ For node WA with adjacent node NT and SA for 3 colors:
     => ¬Color(WA,R) v ¬Color(WA,B)
  */
 
-void Visit(vector<string>* visited, string parentNode, vector<string>* adjNodes){
+void Visit(unordered_map<string, bool>& visited, string node, unordered_map<string, vector<string>>& nodesToSymbolsWithColorName, int colorCount, vector<vector<Atom>>& clauses, Graph& graph, deque<string>& queue){
+
+    visited[node] = true;
+
+    if (graph.adjL.count(node) < 1) { return;}
+    vector<string> adjNodes = graph.adjL[node];
+
+    for (auto adjNode : adjNodes){
+        queue.push_back(adjNode);
+        nodesToSymbolsWithColorName[adjNode] = GetSymbolsWithColor(adjNode, colorCount);
+    }
+
+    vector<string> parentAllColorSymbols = nodesToSymbolsWithColorName[node];
+    vector<Atom> clause;
+    for (auto iter = parentAllColorSymbols.begin(); iter != parentAllColorSymbols.end(); ){
+        Atom a(*iter);
+        
+        iter++;
+        if(iter != parentAllColorSymbols.end()){
+            Atom op = Atom(OP_TYPE::OR);
+            a.SetNext(&op);
+            clause.push_back(a);
+            clause.push_back(op);
+        } else {
+            clause.push_back(a);
+        }
+    }
+    clauses.push_back(clause);
+    
+
+    for (auto iter = adjNodes.begin(); iter != adjNodes.end(); iter++){
+        for (int i = 0; i < colorCount; i++){
+            Atom not1(OP_TYPE::NOT);
+            Atom or1(OP_TYPE::OR);
+            Atom not2(OP_TYPE::NOT);
+            Atom parent(parentAllColorSymbols[i]);
+            Atom adj(nodesToSymbolsWithColorName[*iter][i]);
+
+            not1.SetNext(&parent);
+            parent.SetNext(&or1);
+            or1.SetNext(&not2);
+            not2.SetNext(&adj);
+
+            parent.SetPrevious(&not1);
+            or1.SetPrevious(&parent);
+            not2.SetPrevious(&or1);
+            adj.SetPrevious(&not2);
+
+            vector<Atom> clause2;
+            clause2.push_back(not1);
+            clause2.push_back(parent);
+            clause2.push_back(or1);
+            clause2.push_back(not2);
+            clause2.push_back(adj);
+
+            clauses.push_back(clause2);
+        }
+    }
+
+
+    for (int i = 0; i < colorCount; i++){
+        for (int j = i+1; j < colorCount; j++){
+            Atom color1(parentAllColorSymbols[i]);
+            Atom color2(parentAllColorSymbols[j]);
+            Atom not1(OP_TYPE::NOT);
+            Atom or1(OP_TYPE::OR);
+            Atom not2(OP_TYPE::NOT);
+
+            not1.SetNext(&color1);
+            color1.SetNext(&or1);
+            or1.SetNext(&not2);
+            not2.SetNext(&color2);
+
+            color1.SetPrevious(&not1);
+            or1.SetPrevious(&color1);
+            not2.SetPrevious(&or1);
+            color2.SetPrevious(&not2);
+
+            vector<Atom> clause3;
+            clause3.push_back(not1);
+            clause3.push_back(color1);
+            clause3.push_back(or1);
+            clause3.push_back(not2);
+            clause3.push_back(color2);
+
+            clauses.push_back(clause3);
+        }
+    }
+
+    while(!queue.empty()){
+        string lNode = queue.front();
+        queue.pop_front();
+        Visit(visited, lNode, nodesToSymbolsWithColorName, colorCount, clauses, graph, queue);
+    }
 
 }
 
 vector<vector<Atom>> GraphConstraints(Graph graph, int colorCount){
     
     int N = graph.nodes.size();
-    // string colors[] = {"R", "B", "G", "Y"};
     vector<vector<Atom>> clauses;
-
     unordered_map<string, bool> visited;
-    for (string node : graph.nodes) {
-        visited[node] = false;
-    }
-
+    unordered_map<string, vector<string>> nodesToSymbolsWithColorName;
     deque<string> queue;
+
+    for (string node : graph.nodes) { visited[node] = false;}
 
     for (string node : graph.nodes) {
         if(visited[node] == true) { continue;}
-
-        visited[node] = true;
-        if (graph.adjL.count(node) < 1) { continue;}
-
-        unordered_map<string, vector<string>> nodesToSymbolsWithColorName;
-        vector<string> adjNodes;
         nodesToSymbolsWithColorName[node] = GetSymbolsWithColor(node, colorCount);
-        
-        for (auto adjNode : graph.adjL[node]){
-            queue.push_back(adjNode);
-            adjNodes.push_back(adjNode);
-            // visited[adjNode] = true;
-            nodesToSymbolsWithColorName[adjNode] = GetSymbolsWithColor(adjNode, colorCount);
-        }
-
-        vector<string> parentAllColorSymbols = nodesToSymbolsWithColorName[node];
-        vector<Atom> clause;
-        for (auto iter = parentAllColorSymbols.begin(); iter != parentAllColorSymbols.end(); ){
-            Atom a(*iter);
-            
-            iter++;
-            if(iter != parentAllColorSymbols.end()){
-                Atom op = Atom(OP_TYPE::OR);
-                a.SetNext(&op);
-                clause.push_back(a);
-                clause.push_back(op);
-            } else {
-                clause.push_back(a);
-            }
-        }
-        clauses.push_back(clause);
-        
-
-        for (auto iter = adjNodes.begin(); iter != adjNodes.end(); iter++){
-            for (int i = 0; i < colorCount; i++){
-                Atom not1(OP_TYPE::NOT);
-                Atom or1(OP_TYPE::OR);
-                Atom not2(OP_TYPE::NOT);
-                Atom parent(parentAllColorSymbols[i]);
-                Atom adj(nodesToSymbolsWithColorName[*iter][i]);
-
-                not1.SetNext(&parent);
-                parent.SetNext(&or1);
-                or1.SetNext(&not2);
-                not2.SetNext(&adj);
-
-                parent.SetPrevious(&not1);
-                or1.SetPrevious(&parent);
-                not2.SetPrevious(&or1);
-                adj.SetPrevious(&not2);
-
-                vector<Atom> clause2;
-                clause2.push_back(not1);
-                clause2.push_back(parent);
-                clause2.push_back(or1);
-                clause2.push_back(not2);
-                clause2.push_back(adj);
-
-                clauses.push_back(clause2);
-            }
-        }
-
-
-        for (int i = 0; i < colorCount; i++){
-            for (int j = i+1; j < colorCount; j++){
-                Atom color1(parentAllColorSymbols[i]);
-                Atom color2(parentAllColorSymbols[j]);
-                Atom not1(OP_TYPE::NOT);
-                Atom or1(OP_TYPE::OR);
-                Atom not2(OP_TYPE::NOT);
-
-                not1.SetNext(&color1);
-                color1.SetNext(&or1);
-                or1.SetNext(&not2);
-                not2.SetNext(&color2);
-
-                color1.SetPrevious(&not1);
-                or1.SetPrevious(&color1);
-                not2.SetPrevious(&or1);
-                color2.SetPrevious(&not2);
-
-                vector<Atom> clause3;
-                clause3.push_back(not1);
-                clause3.push_back(color1);
-                clause3.push_back(or1);
-                clause3.push_back(not2);
-                clause3.push_back(color2);
-
-                clauses.push_back(clause3);
-            }
-        }
+        Visit(visited, node, nodesToSymbolsWithColorName, colorCount, clauses, graph, queue);
     }
 
     return clauses;
