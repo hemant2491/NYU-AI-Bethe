@@ -17,7 +17,7 @@
 #include <string>
 #include <sys/stat.h>
 #include <vector>
-#include <unordered_map>
+#include <map>
 #include <unordered_set>
 #include <fstream>
 #include <cstring>
@@ -33,7 +33,7 @@ class Graph {
     public:
         int N; //number of vertices
         set<string> nodes; //set of vertices
-        unordered_map<string, set<string>> adjL; //node adjacency list
+        map<string, set<string>> adjL; //node adjacency list
 
         void UpdateVertexCount(){
             N = nodes.size();
@@ -194,7 +194,7 @@ Graph ParseInput(string inputFileName){
     }
 
     graph.UpdateVertexCount();
-    graph.Print();
+    // graph.Print();
     return graph;
 }
 
@@ -219,7 +219,7 @@ For node WA with adjacent node NT and SA for 3 colors:
     => ¬Color(WA,R) v ¬Color(WA,B)
  */
 
-void Visit(unordered_map<string, bool>& visited, string node, unordered_map<string, vector<string>>& nodesToSymbolsWithColorName, int colorCount, vector<vector<Atom>>& sentences, const set<string>& adjNodes){
+void Visit(map<string, bool>& visited, string node, map<string, vector<string>>& nodesToSymbolsWithColorName, int colorCount, vector<vector<Atom>>& sentences, const set<string>& adjNodes){
 
     if(visited[node] == true){ return;}
     visited[node] = true;
@@ -325,8 +325,8 @@ tuple<vector<vector<Atom>>, set<string>> GraphConstraints(Graph graph, int color
     
     int N = graph.nodes.size();
     vector<vector<Atom>> sentences;
-    unordered_map<string, bool> visited;
-    unordered_map<string, vector<string>> nodesToSymbolsWithColorName;
+    map<string, bool> visited;
+    map<string, vector<string>> nodesToSymbolsWithColorName;
     set<string> allSymbols;
     deque<string> queue;
 
@@ -379,6 +379,8 @@ void PrintSentences(vector<vector<Atom>> sentences, bool verbose){
     }
 }
 
+bool DPLLSolver(vector<vector<Atom>>& sentences, vector<bool>& isSentenceSolved, map<string,pair<bool,bool>>& assignments, bool verbose);
+
 // tuple<vector<vector<Atom>>, bool> Propagate(Atom atom, vector<vector<Atom>>& sentences){
 void Propagate(const string symbol, const bool isNegated, vector<vector<Atom>>& sentences, vector<bool>& isSentenceSolved){
 
@@ -419,7 +421,7 @@ bool isAnySentenceEmpty(vector<vector<Atom>>& sentences, vector<bool>& isSentenc
     return emptySentenceFound;
 }
 
-bool EasyCaseUnitLiteral(vector<vector<Atom>>& sentences, vector<bool>& isSentenceSolved, unordered_map<string,bool>& assignments, bool verbose){
+bool EasyCaseUnitLiteral(vector<vector<Atom>>& sentences, vector<bool>& isSentenceSolved, map<string,pair<bool,bool>>& assignments, bool verbose){
     int includedSymbolCount = 0;
     bool unitLiteralFound = false;
     string unitSym;
@@ -456,18 +458,18 @@ bool EasyCaseUnitLiteral(vector<vector<Atom>>& sentences, vector<bool>& isSenten
         if(verbose){
             printf("easy case: unit literal %s\n", unitSym.c_str());
         }
-        assignments[unitSym] = unitSymIsNegated;
+        assignments[unitSym] = make_pair(true,unitSymIsNegated);
         Propagate(unitSym, unitSymIsNegated, sentences, isSentenceSolved);
     }
 
     return true;
 }
 
-bool EasyCasePureLiteral(vector<vector<Atom>>& sentences, vector<bool>& isSentenceSolved, unordered_map<string,bool>& assignments, bool verbose){
+bool EasyCasePureLiteral(vector<vector<Atom>>& sentences, vector<bool>& isSentenceSolved, map<string,pair<bool,bool>>& assignments, bool verbose){
 
     // map containing record of symbol name and if its positive and negated version is found
-    // unordered_map<symbol_name, pair<poitive_found, negative_found>>
-    unordered_map<string, pair<bool, bool>> symbolToSigns;
+    // map<symbol_name, pair<poitive_found, negative_found>>
+    map<string, pair<bool, bool>> symbolToSigns;
     bool pureLiteralFound = false;
     string pureSym;
     bool pureSymIsNegated = false;
@@ -510,23 +512,105 @@ bool EasyCasePureLiteral(vector<vector<Atom>>& sentences, vector<bool>& isSenten
             pureSym = element.first;
 
             if(verbose){
-                printf("easy case: pure literal %s=%s", pureSym.c_str(), pureSymIsNegated ? "false" : "true");
+                printf("easy case: pure literal %s=%s\n", pureSym.c_str(), pureSymIsNegated ? "false" : "true");
             }
 
-            assignments[pureSym] = !pureSymIsNegated;
+            assignments[pureSym] = make_pair(true,!pureSymIsNegated);
 
             Propagate(pureSym, pureSymIsNegated, sentences, isSentenceSolved);
 
             return true;
         }
     }
-    
+
     return false;
+}
+
+void CopySentences(vector<vector<Atom>>& sentences, vector<vector<Atom>>& sentencesCopy){
+    
+    // not1.SetNext(&color1);
+    // color1.SetNext(&or1);
+    // not2.SetPrevious(&or1);
+    // color2.SetPrevious(&not2);
+
+    for(int i = 0; i < sentences.size(); i++){
+        vector<Atom> sentenceCopy;
+        for(auto atomIter = sentences[i].begin(); atomIter != sentences[i].end(); atomIter++){
+            if (atomIter->isOperation){
+                Atom a(atomIter->type);
+                sentenceCopy.push_back(a);
+            } else {
+                Atom a(atomIter->symbol);
+                sentenceCopy.push_back(a);
+            }
+        }
+        sentencesCopy.push_back(sentenceCopy);
+    }
+
+    for(int i = 0; i < sentencesCopy.size(); i++){
+        auto atomIter = sentencesCopy[i].begin();
+        auto atomRIter = sentencesCopy[i].rbegin();
+        for(; atomIter != sentencesCopy[i].end(); atomIter++, atomRIter++){
+
+        }
+    }
+}
+
+bool HardCase(vector<vector<Atom>>& sentences, vector<bool>& isSentenceSolved, map<string,pair<bool,bool>>& assignments, bool verbose){
+    
+    // Make copy of sentences, isSentenceSolved and assignments
+    // before guessing in hard case for easy roll back
+    vector<bool> isSentenceSolvedCopy = isSentenceSolved;
+    map<string,pair<bool,bool>> assignmentsCopy = assignments;
+    vector<vector<Atom>> sentencesCopy;
+    CopySentences(sentences, sentencesCopy);
+
+    string symbol;
+    bool isNegated;
+
+    for (auto assignment : assignments){
+        if (!assignment.second.first){
+            symbol = assignment.first;
+            break;
+        }
+    }
+
+    if(verbose){
+        printf("hard case: guess %s=true\n", symbol.c_str());
+    }
+
+    assignments[symbol] = make_pair(true, true);
+
+    // first try with true i.e. isNegated = false
+    Propagate(symbol, false, sentences, isSentenceSolved);
+    if (DPLLSolver(sentences, isSentenceSolved, assignments, verbose)){
+        return true;
+    }
+
+    // roll back changes
+    isSentenceSolved = isSentenceSolvedCopy;
+    assignments = assignmentsCopy;
+    sentences = sentencesCopy;
+
+    if(verbose){
+        printf("contradiction: backtrack guess %s=false\n", symbol);
+    }
+    assignments[symbol] = make_pair(true, false);
+
+    // now try with false i.e. isNegated = true;
+    Propagate(symbol, true, sentences, isSentenceSolved);
+    if (DPLLSolver(sentences, isSentenceSolved, assignments, verbose)){
+        return true;
+    }
+
+    return false;
+
+
 }
 
 // sentences = S
 // assignments = A
-bool DPLLSolver(vector<vector<Atom>>& sentences, vector<bool>& isSentenceSolved, unordered_map<string,bool>& assignments, bool verbose){
+bool DPLLSolver(vector<vector<Atom>>& sentences, vector<bool>& isSentenceSolved, map<string,pair<bool,bool>>& assignments, bool verbose){
     // 1. check if S is empty
     if(IsSEmpty(isSentenceSolved)){ return true;}
 
@@ -543,35 +627,46 @@ bool DPLLSolver(vector<vector<Atom>>& sentences, vector<bool>& isSentenceSolved,
         return DPLLSolver(sentences, isSentenceSolved, assignments, verbose);
     }
 
-
     // 4. hard-case: 
     // if no 'easy-case', guess an atom, assign true, propagate and recursive call
     // If failure returned from recursive call try assigning False, propagate, recursive call to 1
+    return HardCase(sentences, isSentenceSolved, assignments, verbose);
 
 
     return true;
 
 }
 
-unordered_map<string,bool> DPLL(vector<vector<Atom>>& sentences, set<string>& allSymbols, bool verbose){
+map<string,pair<bool,bool>> DPLL(vector<vector<Atom>>& sentences, set<string>& allSymbols, bool verbose){
     // for(auto sym : allSymbols) Solve(sentences);
     vector<bool> isSentenceSolved(sentences.size(), false);
-    unordered_map<string,bool> assignments;
+    map<string,pair<bool,bool>> assignments;
+
+    for (string symbol : allSymbols){
+        assignments[symbol] = make_pair(false,false);
+    }
 
     if(DPLLSolver(sentences, isSentenceSolved, assignments, verbose)){
+        for (auto assignment : assignments){
+            if (!assignment.second.first){
+                assignment.second.first = true;
+                assignment.second.second = false;
+            }
+        }
         return assignments;
     } else {
         printf("NO VALID ASSIGNMENT\n");
+        exit(1);
     }
 }
 
-unordered_map<string, string> ConvertBack(unordered_map<string, bool>& assignments){
+map<string, string> ConvertBack(map<string,pair<bool,bool>>& assignments){
     
     set<string> stateAssigned;
-    unordered_map<string, string> solution;
+    map<string, string> solution;
     
     for(auto assignment : assignments){
-        if(assignment.second){
+        if(assignment.second.first && assignment.second.second){
             string state = assignment.first.substr(0, assignment.first.size()-3);
             if(solution.count(state) < 1){
                 string colorChar = assignment.first.substr(assignment.first.size()-1, assignment.first.size()-1);
@@ -587,12 +682,13 @@ unordered_map<string, string> ConvertBack(unordered_map<string, bool>& assignmen
                 }
                 solution[state] = color;
             } 
-             
         }
     }
+
+    return solution;
 }
 
-void PrintSolution(unordered_map<string,string>& solution){
+void PrintSolution(map<string,string>& solution){
     for(auto element : solution){
         printf("%s = %s\n", element.first.c_str(), element.second.c_str());
     }
@@ -610,8 +706,9 @@ int main(int argc, char** argv){
         exit(1);
     }
 
-    if(argc == 4 && argv[1] == "-v"){
+    if(argc == 4 && string(argv[1]) == "-v"){
         verbose = true;
+        printf("verbose = true\n");
     }
 
     if(argc == 4 && string(argv[1]) != "-v"){
@@ -648,10 +745,12 @@ int main(int argc, char** argv){
     Graph graph = ParseInput(inputFile);
 
     auto [sentences, allSymbols] = GraphConstraints(graph, ncolors);
-    PrintSentences(sentences, verbose);
+    if(verbose){
+        PrintSentences(sentences, verbose);
+    }
 
-    unordered_map<string, bool> assignments = DPLL(sentences, allSymbols, verbose);
-    unordered_map<string, string> solution = ConvertBack(assignments);
+    map<string,pair<bool,bool>> assignments = DPLL(sentences, allSymbols, verbose);
+    map<string, string> solution = ConvertBack(assignments);
     PrintSolution(solution);
     
     return 0;
