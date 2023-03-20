@@ -69,10 +69,8 @@ class Atom {
     public:
         bool isOperation = false;
         bool isSymbol = false;
-        // bool notFlag;
         string symbol = "";
         OP_TYPE type;
-        // char color;
         Atom* next = NULL;
         Atom* previous = NULL;
         bool isIncluded = false;
@@ -150,7 +148,7 @@ void PrintUsage(string error){
     printf("\t* $input-file: a graph input file \n");
 }
 
-Graph ParseInput(string inputFileName){
+Graph ParseInput(const string inputFileName){
     ifstream fin;
     string line;
     Graph graph;
@@ -260,9 +258,11 @@ void Visit(map<string, bool>& visited, string node, map<string, vector<string>>&
                 Atom adj(nodesToSymbolsWithColorName[*iter][i]);
 
                 not1.SetNext(&parent);
+                // parent.SetNegated(true);
                 parent.SetNext(&or1);
                 or1.SetNext(&not2);
                 not2.SetNext(&adj);
+                // adj.SetNegated(true);
 
                 parent.SetPrevious(&not1);
                 or1.SetPrevious(&parent);
@@ -292,9 +292,11 @@ void Visit(map<string, bool>& visited, string node, map<string, vector<string>>&
             Atom not2(OP_TYPE::NOT);
 
             not1.SetNext(&color1);
+            // color1.SetNegated(true);
             color1.SetNext(&or1);
             or1.SetNext(&not2);
             not2.SetNext(&color2);
+            // color2.SetNegated(true);
 
             color1.SetPrevious(&not1);
             or1.SetPrevious(&color1);
@@ -309,6 +311,24 @@ void Visit(map<string, bool>& visited, string node, map<string, vector<string>>&
             sentence3.push_back(color2);
 
             sentences.push_back(sentence3);
+        }
+    }
+
+    for (auto sentencesIter = sentences.begin(); sentencesIter != sentences.end(); sentencesIter++){
+        auto iter = sentencesIter->begin();
+        auto riter = sentencesIter->rbegin();
+        Atom* previous;
+        Atom* next;
+
+        for(;iter != sentencesIter->end(); iter++, riter++){
+            if(iter != sentencesIter->begin()){
+                iter->SetPrevious(previous);
+            }
+            if(riter != sentencesIter->rbegin()){
+                riter->SetNext(next);
+            }
+            previous = &(*iter);
+            next = &(*riter);
         }
     }
 
@@ -340,10 +360,13 @@ tuple<vector<vector<Atom>>, set<string>> GraphConstraints(Graph graph, int color
     }
 
     // Negate symbol Atoms after '!'
-    for(auto sentence : sentences){
-        for(auto atom : sentence){
-            if(atom.isOperation && atom.type == OP_TYPE::NOT){
-                atom.next->SetNegated(true);
+    // for(int i = 0; i < sentences.size(); i++){
+    for(auto sentenceIter = sentences.begin(); sentenceIter != sentences.end(); sentenceIter++){
+        for(auto atomIter = sentenceIter->begin(); atomIter != sentenceIter->end(); atomIter++){
+            if(atomIter->isOperation && atomIter->type == OP_TYPE::NOT){
+                // printf("%s DEBUG: currently %s set %s negated\n", __func__, atomIter->next->isNegated ? "negated" : "positive", atomIter->next->symbol.c_str());
+                
+                atomIter->next->SetNegated(true);
             }
         }
     }
@@ -389,7 +412,7 @@ void Propagate(const string symbol, const bool isNegated, vector<vector<Atom>>& 
         for(auto atomIter = sentences[i].begin(); atomIter != sentences[i].end(); atomIter++){
             if(atomIter->isSymbol && atomIter->symbol == symbol && atomIter->isNegated == isNegated){
                 isSentenceSolved[i] = true;
-                break;;
+                break;
             } else if(atomIter->isSymbol && atomIter->symbol == symbol){
                 atomIter->SetIncluded(false);
             }
@@ -422,6 +445,7 @@ bool isAnySentenceEmpty(vector<vector<Atom>>& sentences, vector<bool>& isSentenc
 }
 
 bool EasyCaseUnitLiteral(vector<vector<Atom>>& sentences, vector<bool>& isSentenceSolved, map<string,pair<bool,bool>>& assignments, bool verbose){
+    // printf("%s DEBUG\n", __func__);
     int includedSymbolCount = 0;
     bool unitLiteralFound = false;
     string unitSym;
@@ -447,9 +471,12 @@ bool EasyCaseUnitLiteral(vector<vector<Atom>>& sentences, vector<bool>& isSenten
             unitLiteralFound = true;
             unitSym = tmpSym;
             unitSymIsNegated = tmpSymIsNegated;
+            sentences[i][0].SetIncluded(false);
         } else if (includedSymbolCount == 1  && unitLiteralFound){
             if (tmpSym == unitSym && tmpSymIsNegated != unitSymIsNegated){
                 return false;
+            } else if (tmpSym == unitSym){
+                sentences[i][0].SetIncluded(false);
             }
         }
     }
@@ -460,13 +487,15 @@ bool EasyCaseUnitLiteral(vector<vector<Atom>>& sentences, vector<bool>& isSenten
         }
         assignments[unitSym] = make_pair(true,unitSymIsNegated);
         Propagate(unitSym, unitSymIsNegated, sentences, isSentenceSolved);
+        return true;
     }
 
-    return true;
+    return false;
 }
 
 bool EasyCasePureLiteral(vector<vector<Atom>>& sentences, vector<bool>& isSentenceSolved, map<string,pair<bool,bool>>& assignments, bool verbose){
 
+    // printf("%s DEBUG\n", __func__);
     // map containing record of symbol name and if its positive and negated version is found
     // map<symbol_name, pair<poitive_found, negative_found>>
     map<string, pair<bool, bool>> symbolToSigns;
@@ -491,8 +520,10 @@ bool EasyCasePureLiteral(vector<vector<Atom>>& sentences, vector<bool>& isSenten
             for(auto atomIter = sentences[i].begin(); atomIter != sentences[i].end(); atomIter++){
                 if(atomIter->isSymbol && !atomIter->isNegated){
                     symbolToSigns[atomIter->symbol].first = true;
+                    // printf("%s DEBUG: %s poistive\n", __func__, atomIter->symbol.c_str());
                 } else if(atomIter->isSymbol && atomIter->isNegated){
                     symbolToSigns[atomIter->symbol].second = true;
+                    // printf("%s DEBUG: %s negative\n", __func__, atomIter->symbol.c_str());
                 } 
             }
         }
@@ -526,12 +557,17 @@ bool EasyCasePureLiteral(vector<vector<Atom>>& sentences, vector<bool>& isSenten
     return false;
 }
 
+bool EasyCase(vector<vector<Atom>>& sentences, vector<bool>& isSentenceSolved, map<string,pair<bool,bool>>& assignments, bool verbose){
+    if(EasyCaseUnitLiteral(sentences, isSentenceSolved, assignments, verbose)){
+        return true;
+    }
+    if(EasyCasePureLiteral(sentences, isSentenceSolved, assignments, verbose)){
+        return true;
+    }
+    return false;
+}
+
 void CopySentences(vector<vector<Atom>>& sentences, vector<vector<Atom>>& sentencesCopy){
-    
-    // not1.SetNext(&color1);
-    // color1.SetNext(&or1);
-    // not2.SetPrevious(&or1);
-    // color2.SetPrevious(&not2);
 
     for(int i = 0; i < sentences.size(); i++){
         vector<Atom> sentenceCopy;
@@ -541,6 +577,8 @@ void CopySentences(vector<vector<Atom>>& sentences, vector<vector<Atom>>& senten
                 sentenceCopy.push_back(a);
             } else {
                 Atom a(atomIter->symbol);
+                a.SetIncluded(atomIter->isIncluded);
+                a.SetNegated(atomIter->isNegated);
                 sentenceCopy.push_back(a);
             }
         }
@@ -548,10 +586,20 @@ void CopySentences(vector<vector<Atom>>& sentences, vector<vector<Atom>>& senten
     }
 
     for(int i = 0; i < sentencesCopy.size(); i++){
-        auto atomIter = sentencesCopy[i].begin();
-        auto atomRIter = sentencesCopy[i].rbegin();
-        for(; atomIter != sentencesCopy[i].end(); atomIter++, atomRIter++){
+        auto iter = sentencesCopy[i].begin();
+        auto riter = sentencesCopy[i].rbegin();
+        Atom* previous;
+        Atom* next;
 
+        for(;iter != sentencesCopy[i].end(); iter++, riter++){
+            if(iter != sentencesCopy[i].begin()){
+                iter->SetPrevious(previous);
+            }
+            if(riter != sentencesCopy[i].rbegin()){
+                riter->SetNext(next);
+            }
+            previous = &(*iter);
+            next = &(*riter);
         }
     }
 }
@@ -579,7 +627,9 @@ bool HardCase(vector<vector<Atom>>& sentences, vector<bool>& isSentenceSolved, m
         printf("hard case: guess %s=true\n", symbol.c_str());
     }
 
-    assignments[symbol] = make_pair(true, true);
+    // assignments[symbol] = make_pair(true, true);
+    assignments[symbol].first = true;
+    assignments[symbol].second = true;
 
     // first try with true i.e. isNegated = false
     Propagate(symbol, false, sentences, isSentenceSolved);
@@ -595,7 +645,9 @@ bool HardCase(vector<vector<Atom>>& sentences, vector<bool>& isSentenceSolved, m
     if(verbose){
         printf("contradiction: backtrack guess %s=false\n", symbol);
     }
-    assignments[symbol] = make_pair(true, false);
+    // assignments[symbol] = make_pair(true, false);
+    assignments[symbol].first = true;
+    assignments[symbol].second = false;
 
     // now try with false i.e. isNegated = true;
     Propagate(symbol, true, sentences, isSentenceSolved);
@@ -604,8 +656,6 @@ bool HardCase(vector<vector<Atom>>& sentences, vector<bool>& isSentenceSolved, m
     }
 
     return false;
-
-
 }
 
 // sentences = S
@@ -613,6 +663,7 @@ bool HardCase(vector<vector<Atom>>& sentences, vector<bool>& isSentenceSolved, m
 bool DPLLSolver(vector<vector<Atom>>& sentences, vector<bool>& isSentenceSolved, map<string,pair<bool,bool>>& assignments, bool verbose){
     // 1. check if S is empty
     if(IsSEmpty(isSentenceSolved)){ return true;}
+    else{ printf("DEBUG: S Not Empty\n", __func__);}
 
     // 2. check if any sentence in S is empty
     if(isAnySentenceEmpty(sentences, isSentenceSolved)){ return false;}
@@ -621,20 +672,29 @@ bool DPLLSolver(vector<vector<Atom>>& sentences, vector<bool>& isSentenceSolved,
     // either a sentence with a single atom(aka unit-clause)
     // or a pure-literal(atom existing with always the same sign)
     // "propagate" the assignment, then back to start of solver
-    if(EasyCaseUnitLiteral(sentences, isSentenceSolved, assignments, verbose)
-        && EasyCasePureLiteral(sentences, isSentenceSolved, assignments, verbose)){
-
+    if(EasyCase(sentences, isSentenceSolved, assignments, verbose)){
         return DPLLSolver(sentences, isSentenceSolved, assignments, verbose);
     }
 
     // 4. hard-case: 
     // if no 'easy-case', guess an atom, assign true, propagate and recursive call
     // If failure returned from recursive call try assigning False, propagate, recursive call to 1
-    return HardCase(sentences, isSentenceSolved, assignments, verbose);
+    if (HardCase(sentences, isSentenceSolved, assignments, verbose)){
+        return true;
+    }
 
+    return false;
+}
 
-    return true;
-
+void PrintAssignments(map<string,pair<bool,bool>>& assignments){
+    // printf("%s Degug assignments size %d\n", __func__, assignments.size());
+    for (auto assignment : assignments){
+        if(assignment.second.first){
+            printf("%s=%s\n", assignment.first.c_str(), assignment.second.second ? "true" : "false");
+        } else {
+            printf("%s=''\n", assignment.first.c_str());
+        }
+    }
 }
 
 map<string,pair<bool,bool>> DPLL(vector<vector<Atom>>& sentences, set<string>& allSymbols, bool verbose){
@@ -645,6 +705,7 @@ map<string,pair<bool,bool>> DPLL(vector<vector<Atom>>& sentences, set<string>& a
     for (string symbol : allSymbols){
         assignments[symbol] = make_pair(false,false);
     }
+    PrintAssignments(assignments);
 
     if(DPLLSolver(sentences, isSentenceSolved, assignments, verbose)){
         for (auto assignment : assignments){
@@ -659,6 +720,8 @@ map<string,pair<bool,bool>> DPLL(vector<vector<Atom>>& sentences, set<string>& a
         exit(1);
     }
 }
+
+
 
 map<string, string> ConvertBack(map<string,pair<bool,bool>>& assignments){
     
@@ -750,6 +813,8 @@ int main(int argc, char** argv){
     }
 
     map<string,pair<bool,bool>> assignments = DPLL(sentences, allSymbols, verbose);
+    PrintAssignments(assignments);
+
     map<string, string> solution = ConvertBack(assignments);
     PrintSolution(solution);
     
