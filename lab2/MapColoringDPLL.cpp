@@ -28,7 +28,7 @@
 using namespace std;
 
 enum OP_TYPE{NOT, AND, OR};
-bool DEBUG = true;
+bool DEBUG = false;
 
 class Graph {
     public:
@@ -66,6 +66,8 @@ class Graph {
         }
 };
 
+// Class for each atom in a sentence,
+// could be a string(ex. NSW) or operation(ex. '^', 'v', '!')
 class Atom {
     public:
         bool isOperation = false;
@@ -167,13 +169,8 @@ Graph ParseInput(const string inputFileName){
     while(fin){
         // Read a line from input file
         getline(fin, line);
-
-        // printf("%s\n", line.c_str());
         trim(line);
-        // printf("%s\n", line.c_str());
-
         if(line.empty() || line.at(0) == '#'){ continue;}
-        // printf("%s\n", line.c_str());
 
         int foundChildren = line.find(":");
         string parent = line.substr(0, foundChildren);
@@ -193,7 +190,7 @@ Graph ParseInput(const string inputFileName){
     }
 
     graph.UpdateVertexCount();
-    // graph.Print();
+    if(DEBUG){ graph.Print();}
     return graph;
 }
 
@@ -209,11 +206,11 @@ inline vector<string> GetSymbolsWithColor(string node, int colorCount){
 
 /* 
 For node WA with adjacent node NT and SA for 3 colors:
-1. Color(WA,R) v Color(WA,G) v Color(WA,B)
-2. Color(WA,R) =>¬[Color(NT,R) v Color(SA,R)] for each color
+1. Color(WA,R) v Color(WA,G) v Color(WA,B)                        --> Sentence type 1
+2. Color(WA,R) =>¬[Color(NT,R) v Color(SA,R)] for each color      --> Sentence type 2
     => ¬Color(WA,R) v ¬Color(NT,R)
     => ¬Color(WA,R) v ¬Color(SA,R)
-3. Color(WA,R) =>¬[Color(WA,G) v Color(WA,B)] for each color pair
+3. Color(WA,R) =>¬[Color(WA,G) v Color(WA,B)] for each color pair --> Sentence type 3
     => ¬Color(WA,R) v ¬Color(WA,G)
     => ¬Color(WA,R) v ¬Color(WA,B)
  */
@@ -223,11 +220,7 @@ void Visit(map<string, bool>& visited, string node, map<string, vector<string>>&
     if(visited[node] == true){ return;}
     visited[node] = true;
 
-    // if(graph.adjL.count(node) < 1){ return;}
-    // set<string> adjNodes = graph.adjL[node];
-
     for(auto adjNode : adjNodes){
-        // queue.push_back(adjNode);
         nodesToSymbolsWithColorName[adjNode] = GetSymbolsWithColor(adjNode, colorCount);
     }
 
@@ -239,7 +232,6 @@ void Visit(map<string, bool>& visited, string node, map<string, vector<string>>&
         iter++;
         if(iter != parentAllColorSymbols.end()){
             Atom op = Atom(OP_TYPE::OR);
-            // a.SetNext(&op);
             sentence1.push_back(a);
             sentence1.push_back(op);
         } else {
@@ -311,16 +303,13 @@ tuple<vector<vector<Atom>>, set<string>> GraphConstraints(Graph graph, int color
 
     for(string node : graph.nodes){
         if(visited[node] == true){ continue;}
-        // if(graph.adjL.count(node) < 1){ continue;}
         nodesToSymbolsWithColorName[node] = GetSymbolsWithColor(node, colorCount);
         Visit(visited, node, nodesToSymbolsWithColorName, colorCount, sentences, graph.adjL[node]);
     }
 
-    // if(DEBUG){ printf("# Sentences %d\n", sentences.size());}
     int i = 1;
 
     for (auto sentencesIter = sentences.begin(); sentencesIter != sentences.end(); sentencesIter++){
-        // if(DEBUG){ printf("i = %d\n", i++);}
         Atom* previous;
         Atom* next;
 
@@ -330,30 +319,15 @@ tuple<vector<vector<Atom>>, set<string>> GraphConstraints(Graph graph, int color
             }
 
             if(atomIter != sentencesIter->end()){
-                // if(DEBUG){
-                //     printf("%s SetNext %s\n", riter->isSymbol ? riter->symbol.c_str() 
-                //     : (riter->type == OP_TYPE::NOT ? "NOT" : (riter->type == OP_TYPE::OR ? "OR" : "AND")),
-                //     next->isSymbol ? next->symbol.c_str() 
-                //     : (next->type == OP_TYPE::NOT ? "NOT" : (next->type == OP_TYPE::OR ? "OR" : "AND")));
-                // }
                 atomIter->SetNext(&(*std::next(atomIter,1)));
             }
-            // next = &(*riter);
 
             if(atomIter != sentencesIter->begin()){
-                // if(DEBUG){
-                //     printf("%s SetPrevious %s\n", atomIter->isSymbol ? atomIter->symbol.c_str() 
-                //     : (atomIter->type == OP_TYPE::NOT ? "NOT" : (atomIter->type == OP_TYPE::OR ? "OR" : "AND")),
-                //     previous->isSymbol ? previous->symbol.c_str() 
-                //     : (previous->type == OP_TYPE::NOT ? "NOT" : (previous->type == OP_TYPE::OR ? "OR" : "AND")));
-                // }
                 atomIter->SetPrevious(&(*std::prev(atomIter, 1)));
             }
-            // previous = &(*atomIter);
 
          }
 
-        // if(DEBUG){ printf("\n");}
     }
 
     for(auto element : nodesToSymbolsWithColorName){
@@ -405,13 +379,6 @@ void CopySentences(vector<vector<Atom>>& sentences, vector<vector<Atom>>& senten
         }
     }
 
-    // if(DEBUG){
-    //     printf("Hard Case Sentences Copy\nOriginal:\n");
-    //     bool remainingSentencesOnly = true;
-    //     PrintSentences(sentences, verbose, remainingSentencesOnly, isSentenceSolved);
-    //     printf("Copy:\n");
-    //     PrintSentences(sentencesCopy, verbose, remainingSentencesOnly, isSentenceSolved);
-    // }
 }
 
 void PrintSentences(vector<vector<Atom>> sentences, bool verbose, bool remainingOnly, vector<bool>& isSentenceSolved){
@@ -555,7 +522,7 @@ bool EasyCaseUnitLiteral(vector<vector<Atom>>& sentences, vector<bool>& isSenten
         } 
         else if (includedSymbolCount == 1  && unitLiteralFound){
             if (tmpSym == unitSym && tmpSymIsNegated != unitSymIsNegated){
-                if(verbose && DEBUG)
+                if(DEBUG)
                 {
                     printf("Found unit literal %s with opposite sign\n", tmpSym.c_str());
                 }
@@ -576,7 +543,7 @@ bool EasyCaseUnitLiteral(vector<vector<Atom>>& sentences, vector<bool>& isSenten
             }
         }
         assignments[unitSym] = make_pair(true,!unitSymIsNegated);
-        PrintAssignments(assignments);
+        if(DEBUG){ PrintAssignments(assignments);}
         Propagate(unitSym, unitSymIsNegated, sentences, isSentenceSolved, verbose);
         return true;
     }
@@ -751,18 +718,13 @@ bool DPLLSolver(vector<vector<Atom>>& sentences, vector<bool>& isSentenceSolved,
 
 map<string,pair<bool,bool>> DPLL(vector<vector<Atom>>& sentences, set<string>& allSymbols, bool verbose){
 
-    // for(auto sym : allSymbols) Solve(sentences);
     vector<bool> isSentenceSolved(sentences.size(), false);
     map<string,pair<bool,bool>> assignments;
     vector<vector<Atom>> sentencesCopy;
     CopySentences(sentences, sentencesCopy, isSentenceSolved, verbose);
 
-    if(verbose){
+    if(DEBUG){
         bool remainingSentencesOnly = true;
-    //     PrintSentences(sentences, verbose, !remainingSentencesOnly, isSentenceSolved);
-    //     printf("\n\n");
-    //     PrintSentences(sentences, verbose, remainingSentencesOnly, isSentenceSolved);
-    //     printf("\n\nCopy of Sentences\n");
         PrintSentences(sentencesCopy, verbose, remainingSentencesOnly, isSentenceSolved);
     }
 
@@ -771,7 +733,6 @@ map<string,pair<bool,bool>> DPLL(vector<vector<Atom>>& sentences, set<string>& a
     }
     // if(DEBUG){ PrintAssignments(assignments);}
 
-    // if(DPLLSolver(sentences, isSentenceSolved, assignments, verbose)){
     if(DPLLSolver(sentencesCopy, isSentenceSolved, assignments, verbose)){
         for (auto assignment : assignments){
             if (!assignment.second.first){
@@ -874,7 +835,7 @@ int main(int argc, char** argv){
     auto [sentences, allSymbols] = GraphConstraints(graph, ncolors);
 
     map<string,pair<bool,bool>> assignments = DPLL(sentences, allSymbols, verbose);
-    PrintAssignments(assignments);
+    if (DEBUG){ PrintAssignments(assignments);}
 
     map<string, string> solution = ConvertBack(assignments);
     PrintSolution(solution);
