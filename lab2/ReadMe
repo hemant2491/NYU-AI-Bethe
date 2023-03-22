@@ -1,4 +1,7 @@
 
+NOTE: The output is in line with the *.opt.out examples i.e. the CNF has the optional sentences of type:
+3) [optional] At most one color for each vertex:
+
 MapColoringDPLL.cpp compiles and runs successfully with gcc/g++ version 9.2.0 on linserv1.cims.nyu.edu
 
 Please load module gcc-9.2 before comiling and running MapColoringDPLL.cpp using below command:
@@ -17,3 +20,20 @@ Usage:
 	* -v: an optional flag for verbose mode
 	* $ncolors: the number of colors to solve for.  If 2 use R, G; if 3 RGB; 4 RGBY.
 	* $input-file: a graph input file 
+
+
+Examples:
+
+./solver 2 tests/tiny.txt
+./solver 3 tests/oz.txt
+./solver -v 3 tests/oz.txt
+./solver 3 tests/triangle.txt
+./solver 4 tests/us48.txt
+
+
+outputs will be same as:
+
+tests/triangle.3.opt.out
+tests/tiny.2.opt.out
+tests/oz.3.opt.out
+tests/us48.4.opt.out
