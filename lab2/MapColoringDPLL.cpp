@@ -508,7 +508,7 @@ bool EasyCaseUnitLiteral(vector<vector<Atom>>& sentences, vector<bool>& isSenten
                 }
             }
             if (includedSymbolCount == 0){
-                printf("Something went wrong. Found empty sentence.\n");
+                if(DEBUG){ printf("Something went wrong. Found empty sentence.\n");}
                 return false;
             }
         }
@@ -671,7 +671,7 @@ bool HardCase(vector<vector<Atom>>& sentences, vector<bool>& isSentenceSolved, m
     sentences = sentencesCopy;
 
     if(verbose){
-        printf("contradiction: backtrack guess %s=false\n", symbol);
+        printf("contradiction: backtrack guess %s=false\n", symbol.c_str());
     }
     // assignments[symbol] = make_pair(true, false);
     assignments[symbol].first = true;
