@@ -1,0 +1,23 @@
+
+
+mdp.cpp compiles and runs successfully with gcc/g++ version 9.2.0 on crunchy5.cims.nyu.edu
+
+Please load module gcc-9.2 before comiling and running mdp.cpp using below command:
+$ module load gcc-9.2 
+
+Please fire below command to compile and test provided MapColoringDPLL.cpp: 
+- using `make`
+  $ make
+
+- or below command
+$ g++ -g -std=c++17 -o mdp mdp.cpp
+
+
+Usage:
+Usage:
+	./mdp [-min] [-df <discount_factor>] [-tol <tolerance>] [-iter <num_of_iterations>] <input-file.txt>
+
+Example:
+	mdp -df .9 -tol 0.0001 some-input.txt
+
+
