@@ -14,7 +14,6 @@ $ g++ -g -std=c++17 -o mdp mdp.cpp
 
 
 Usage:
-Usage:
 	./mdp [-min] [-df <discount_factor>] [-tol <tolerance>] [-iter <num_of_iterations>] <input-file.txt>
 
 Example:
