@@ -3,7 +3,6 @@
 * 
 * Use ReadMe file for how to compile and run
 * 
-* 
 */
 
 #include <iostream>
@@ -24,20 +23,19 @@ using namespace std;
 
 class Node{
 public:
-	string name = "";
-	double reward = 0.0;
-	double value = 0.0;
+    string name = "";
+    double reward = 0.0;
+    double value = 0.0;
     double lastValue = 0.0;
     double p;    // alpha = 1-p
-	bool isDecisionNode = false;
+    bool isDecisionNode = false;
     bool isChanceNode = false;
-	vector<string> adjL;
-	vector<double> probs;
-    vector<double> individualProbs;
+    vector<string> adjL;
+    vector<double> probs;
 
-	Node(string name) {
-		this->name = name;
-	}
+    Node(string name) {
+        this->name = name;
+    }
 };
 
 bool DEBUG = false;
@@ -222,7 +220,6 @@ void ValidateGraph(){
             double totalProb = 0.0;
 
             for (auto p = node->probs.begin(); p != node->probs.end(); p++){
-                node->individualProbs.push_back(*p);
                 totalProb += *p;
             }
             if (totalProb != 1){
@@ -233,7 +230,7 @@ void ValidateGraph(){
         } else if (node->adjL.size() == 1){
             node->isChanceNode = true;
             node->isDecisionNode = false;
-            node->individualProbs.push_back(1.0);
+            node->probs.push_back(1.0);
 
         } else if(node->adjL.size() > 0 && node->probs.size() != node->adjL.size()){
             if(DEBUG){ printf("Decision node\n");}
@@ -285,7 +282,7 @@ double ValueIteration(){
         } else {
             double pi_val = 0.0;
             auto cIter = node->adjL.begin();
-            auto pIter = node->individualProbs.begin();
+            auto pIter = node->probs.begin();
 
             for(; cIter  != node->adjL.end(); cIter++, pIter++){
                 pi_val += *pIter * graph[*cIter]->lastValue;
@@ -306,15 +303,9 @@ double ValueIteration(){
 
 void PrintValues(){
     printf("\n");
-    bool first = true;
     for (string nodeSym : allNodeSumbols){
         Node* node = graph[nodeSym];
-        if(first){
-            printf("%s=%.3lf", nodeSym.c_str(), node->lastValue);
-            first = false;
-        } else {
-            printf(" %s=%.3lf", nodeSym.c_str(), node->lastValue);
-        }
+        printf("%s=%.3lf ", nodeSym.c_str(), node->lastValue);
     }
     printf("\n");
 }
