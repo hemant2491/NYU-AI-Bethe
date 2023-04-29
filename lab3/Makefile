@@ -1,7 +1,4 @@
-
 CC=g++
-# CFLAG = -Wall -Werror -pedantic -g -std=c++1y
-# CFLAG = -g -std=c++1y
 CFLAG = -g -std=c++17
 
 mdp: mdp.cpp
