@@ -1,0 +1,22 @@
+Lab 4: Hemant Ramawat(hr2378)
+
+learn.cpp compiles and runs successfully with gcc/g++ version 9.2.0 on crunchy5.cims.nyu.edu
+
+Please load module gcc-9.2 before compiling and running mdp.cpp using below command:
+$ module load gcc-9.2 
+
+Please fire below command to compile and test provided mdp.cpp: 
+- using `make`
+  $ make
+
+- or below command
+$ g++ -g -std=c++17 -o learn learn.cpp
+
+
+Usage:
+	./learn -train <input-file.txt>
+
+Example:
+	./learn -train some-input.txt 0,500 200,200 1000,1000
+
+
