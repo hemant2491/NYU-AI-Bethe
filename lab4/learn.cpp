@@ -22,12 +22,13 @@
 
 #include "helper.h"
 #include "knn.h"
+#include "naive_bayes.h"
 
 using namespace std;
 
 bool DEBUG = false;
 
-void ReadNeighborsFromFile(const string train_file, vector<Entry*>& neighbors, set<string>& labels_in_train, int& attrLength);
+void ReadNeighborsFromFile(const string train_file, vector<Entry*>& neighbors, set<string>& labels_in_train, int& attrLength, vector<set<int>>& attributes_in_train);
 void DisplayInput(const vector<Entry*>& neighbors);
 
 
@@ -50,6 +51,8 @@ int main(int argc, char** argv){
     int c_laplace = 0;
     bool knn_UseEuclid;
     set<string> labels_in_train;
+    // vector of possible of values for each attribute
+    vector<set<int>> attributes_in_train;
     vector<Entry*> neighbors;
 
     // inputFile = argv[argc-1];
@@ -59,27 +62,36 @@ int main(int argc, char** argv){
     for (int i = 1; i < argc-1; i++){
     }
 
-    train_file = "tests/1_knn1.train.txt";
-    test_file = "tests/1_knn1.test.txt";
-
-    ReadNeighborsFromFile(train_file, neighbors, labels_in_train, attrLength);
+    // train_file = "tests/1_knn1.train.txt";
+    train_file = "tests/4_ex1_train.csv";
+    ReadNeighborsFromFile(train_file, neighbors, labels_in_train, attrLength, attributes_in_train);
     if(DEBUG){ DisplayInput(neighbors);}
 
-    algo=ALGO::KNN;
+    // algo=ALGO::KNN;
     k_knn = 3;
     knn_UseEuclid = true;
+    // test_file = "tests/1_knn1.test.txt";
     if(algo == ALGO::KNN){
         KNN_ReadPointsAndPredictLabel(test_file, neighbors, k_knn, labels_in_train, attrLength, knn_UseEuclid);
+    }
+
+    
+    algo = ALGO::BAYES;
+    c_laplace = 1;
+    verbose = true;
+    test_file = "tests/4_ex1_test.csv";
+    if (algo == ALGO::BAYES){
+        NB_ReadPointsAndPredictLabel(test_file, neighbors, labels_in_train, attrLength, attributes_in_train, c_laplace, verbose);
     }
 
     return 0;
 }
 
 
-void ReadNeighborsFromFile(const string train_file, vector<Entry*>& neighbors, set<string>& labels_in_train, int& attrLength){
+void ReadNeighborsFromFile(const string train_file, vector<Entry*>& neighbors, set<string>& labels_in_train, int& attrLength, vector<set<int>>& attributes_in_train){
     ifstream fin;
     string line;
-    if(DEBUG){ printf("parsing input file: %s\n", train_file.c_str());}
+    if(DEBUG){ printf("Reading train file: %s\n", train_file.c_str());}
 
     try
     {
@@ -87,7 +99,7 @@ void ReadNeighborsFromFile(const string train_file, vector<Entry*>& neighbors, s
     }
     catch(std::exception const& e)
     {
-        printf("There was an error in opening input file %s: %s\n", train_file.c_str(), e.what());
+        printf("There was an error in opening train file %s: %s\n", train_file.c_str(), e.what());
         exit(1);
     }
 
@@ -122,6 +134,15 @@ void ReadNeighborsFromFile(const string train_file, vector<Entry*>& neighbors, s
 
         neighbors.push_back(e);
     }
+
+    vector<set<int>> tmp(attrLength);
+    for(Entry* e : neighbors){
+        vector<int>& v = e->attributes;
+        for(int i = 0; i < attrLength; i++){
+            tmp[i].insert(v[i]);
+        }
+    }
+    attributes_in_train = tmp;
 
     fin.close();
 }
