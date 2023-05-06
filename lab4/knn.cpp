@@ -22,7 +22,7 @@ bool SortByDistance(pair<double, string> p1, pair<double, string> p2){
     return p1.first < p2.first;
 }
 
-double KNN_CalculateDistance(Entry* e1, Entry* e2, int& attrLength, bool knn_UseEuclid){
+double KNN_CalculateDistance(Point* e1, Point* e2, int& attrLength, bool knn_UseEuclid){
     double distance = 0;
     for (int i = 0; i < attrLength; i++){
         if(knn_UseEuclid){
@@ -34,14 +34,14 @@ double KNN_CalculateDistance(Entry* e1, Entry* e2, int& attrLength, bool knn_Use
     return distance;
 }
 
-string KNN_PredictLabel(Entry* test_entry, int k, const vector<Entry*>& neighbors,
+string KNN_PredictLabel(Point* test_point, int k, const vector<Point*>& neighbors,
                  set<string>& labels_in_train, int& attrLength, bool knn_UseEuclid){
     
     string predicted_label = "";
 
     vector<pair<double, string>> distances;
     for(auto n = neighbors.begin(); n != neighbors.end(); n++){
-        double distance = KNN_CalculateDistance(test_entry, *n, attrLength, knn_UseEuclid);
+        double distance = KNN_CalculateDistance(test_point, *n, attrLength, knn_UseEuclid);
         distances.push_back(make_pair(distance, (*n)->label));
     }
 
@@ -66,7 +66,7 @@ string KNN_PredictLabel(Entry* test_entry, int k, const vector<Entry*>& neighbor
     return predicted_label;
 }
 
-void KNN_ReadPointsAndPredictLabel(const string test_file_name, const vector<Entry*>& neighbors, int k, 
+void KNN_ReadPointsAndPredictLabel(const string test_file_name, const vector<Point*>& neighbors, int k, 
                         set<string>& labels_in_train, int& attrLength, bool knn_UseEuclid){
     ifstream fin;
     string line;
@@ -100,7 +100,7 @@ void KNN_ReadPointsAndPredictLabel(const string test_file_name, const vector<Ent
         if(DEBUG){ printf("Read line: '%s'\n", line.c_str());}
         if(line.empty()){ continue;}
 
-        Entry* e = new Entry();
+        Point* e = new Point();
         auto label_position = line.rfind(",");
         string point_label = line.substr(label_position+1, line.size()-1);
         e->label = point_label;
@@ -121,7 +121,7 @@ void KNN_ReadPointsAndPredictLabel(const string test_file_name, const vector<Ent
         if (attrLength == 0){
             attrLength = e->attributes.size();
         } else if (e->attributes.size() != attrLength){
-            printf("Error: inconsistent attribute length for entry of label %s\nexpected %d found %lu", 
+            printf("Error: inconsistent attribute length for point of label %s\nexpected %d found %lu", 
                     token.c_str(), attrLength, e->attributes.size());
             exit(1);
         }

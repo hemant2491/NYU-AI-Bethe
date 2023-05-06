@@ -4,11 +4,11 @@
 
 using namespace std;
 
-class Entry{
+class Point{
 public:
     string label = "";
     vector<int> attributes;
-    Entry(){}
+    Point(){}
 };
 
 enum ALGO{

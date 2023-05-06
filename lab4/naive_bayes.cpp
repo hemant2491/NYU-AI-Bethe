@@ -10,7 +10,7 @@ using namespace std;
 
 extern bool DEBUG;
 
-void NB_CalculateProbabilities(const vector<Entry*>& neighbors, const set<string>& labels_in_train, int attrLength, 
+void NB_CalculateProbabilities(const vector<Point*>& neighbors, const set<string>& labels_in_train, int attrLength, 
             const vector<set<int>>& attributes_in_train, int c_laplace, bool verbose,
             unordered_map<string,int>& label_counts, unordered_map<string,double>& label_probabilities,
             unordered_map<string, vector<unordered_map<int,int>>>& label_to_attribute_counts,
@@ -31,12 +31,12 @@ void NB_CalculateProbabilities(const vector<Entry*>& neighbors, const set<string
         }
     }
 
-    for(Entry* e : neighbors){
+    for(Point* e : neighbors){
         label_counts[e->label]++;
-        auto entry_attr_iter = e->attributes.begin();
+        auto point_attr_iter = e->attributes.begin();
         auto label_attr_counts_map_vec_iter = label_to_attribute_counts[e->label].begin();
-        for(; entry_attr_iter != e->attributes.end(); entry_attr_iter++, label_attr_counts_map_vec_iter++){
-            (*label_attr_counts_map_vec_iter)[*entry_attr_iter]++;
+        for(; point_attr_iter != e->attributes.end(); point_attr_iter++, label_attr_counts_map_vec_iter++){
+            (*label_attr_counts_map_vec_iter)[*point_attr_iter]++;
         }
     }
 
@@ -61,7 +61,7 @@ void NB_CalculateProbabilities(const vector<Entry*>& neighbors, const set<string
 
 }
 
-string NB_PredictLabel(Entry* test_entry, const vector<Entry*>& neighbors, const set<string>& labels_in_train, int& attrLength,
+string NB_PredictLabel(Point* test_point, const vector<Point*>& neighbors, const set<string>& labels_in_train, int& attrLength,
             const vector<set<int>>& attributes_in_train, int c_laplace, bool verbose,
             unordered_map<string,int>& label_counts, unordered_map<string,double>& label_probabilities,
             unordered_map<string, vector<unordered_map<int,int>>>& label_to_attribute_counts,
@@ -77,7 +77,7 @@ string NB_PredictLabel(Entry* test_entry, const vector<Entry*>& neighbors, const
             printf("P(C=%s) = [%d / %lu]\n", label.c_str(), label_counts[label], neighbors.size());
         }
         for (int attr_idx = 0; attr_idx < attrLength; attr_idx++){
-            int attr_value = test_entry->attributes[attr_idx];
+            int attr_value = test_point->attributes[attr_idx];
             tmp_probability *= label_to_attribute_probabilities[label][attr_idx][attr_value];
             if (verbose){
                 printf("P(A%d=%d | C=%s) = %d / %lu\n", attr_idx, attr_value, label.c_str(), (label_to_attribute_counts[label][attr_idx][attr_value]+c_laplace), (label_counts[label] + (labels_in_train.size()*c_laplace)));
@@ -103,7 +103,7 @@ string NB_PredictLabel(Entry* test_entry, const vector<Entry*>& neighbors, const
 }
 
 
-void NB_ReadPointsAndPredictLabel(const string test_file_name, const vector<Entry*>& neighbors,
+void NB_ReadPointsAndPredictLabel(const string test_file_name, const vector<Point*>& neighbors,
                 const set<string>& labels_in_train, int attrLength, const vector<set<int>>& attributes_in_train,
                 int c_laplace, bool verbose){
 
@@ -157,7 +157,7 @@ void NB_ReadPointsAndPredictLabel(const string test_file_name, const vector<Entr
         if(DEBUG){ printf("Read line: '%s'\n", line.c_str());}
         if(line.empty()){ continue;}
 
-        Entry* e = new Entry();
+        Point* e = new Point();
         auto label_position = line.rfind(",");
         string point_label = line.substr(label_position+1, line.size()-1);
         e->label = point_label;
@@ -178,7 +178,7 @@ void NB_ReadPointsAndPredictLabel(const string test_file_name, const vector<Entr
         if (attrLength == 0){
             attrLength = e->attributes.size();
         } else if (e->attributes.size() != attrLength){
-            printf("Error: inconsistent attribute length for entry of label %s\nexpected %d found %lu", 
+            printf("Error: inconsistent attribute length for point of label %s\nexpected %d found %lu", 
                     token.c_str(), attrLength, e->attributes.size());
             exit(1);
         }

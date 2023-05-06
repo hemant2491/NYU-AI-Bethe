@@ -28,8 +28,8 @@ using namespace std;
 
 bool DEBUG = false;
 
-void ReadNeighborsFromFile(const string train_file, vector<Entry*>& neighbors, set<string>& labels_in_train, int& attrLength, vector<set<int>>& attributes_in_train);
-void DisplayInput(const vector<Entry*>& neighbors);
+void ReadNeighborsFromFile(const string train_file, vector<Point*>& neighbors, set<string>& labels_in_train, int& attrLength, vector<set<int>>& attributes_in_train);
+void DisplayInput(const vector<Point*>& neighbors);
 
 
 int main(int argc, char** argv){
@@ -53,7 +53,7 @@ int main(int argc, char** argv){
     set<string> labels_in_train;
     // vector of possible of values for each attribute
     vector<set<int>> attributes_in_train;
-    vector<Entry*> neighbors;
+    vector<Point*> neighbors;
 
     // inputFile = argv[argc-1];
     inputFile = "tests/1_knn1.train.txt";
@@ -88,7 +88,7 @@ int main(int argc, char** argv){
 }
 
 
-void ReadNeighborsFromFile(const string train_file, vector<Entry*>& neighbors, set<string>& labels_in_train, int& attrLength, vector<set<int>>& attributes_in_train){
+void ReadNeighborsFromFile(const string train_file, vector<Point*>& neighbors, set<string>& labels_in_train, int& attrLength, vector<set<int>>& attributes_in_train){
     ifstream fin;
     string line;
     if(DEBUG){ printf("Reading train file: %s\n", train_file.c_str());}
@@ -103,7 +103,7 @@ void ReadNeighborsFromFile(const string train_file, vector<Entry*>& neighbors, s
         exit(1);
     }
 
-    int entryCount = 0;
+    int pointCount = 0;
     
     while(getline(fin, line)){
         // Read a line from input file
@@ -111,11 +111,11 @@ void ReadNeighborsFromFile(const string train_file, vector<Entry*>& neighbors, s
         if(DEBUG){ printf("Read line: '%s'\n", line.c_str());}
         if(line.empty()){ continue;}
 
-        Entry* e = new Entry();
+        Point* e = new Point();
         auto label_position = line.rfind(",");
         e->label = line.substr(label_position+1, line.size()-1);
         labels_in_train.insert(e->label);
-        entryCount++;
+        pointCount++;
 
         stringstream s(line.substr(0, label_position));
         string token = "";
@@ -127,8 +127,8 @@ void ReadNeighborsFromFile(const string train_file, vector<Entry*>& neighbors, s
         if (attrLength == 0){
             attrLength = e->attributes.size();
         } else if (e->attributes.size() != attrLength){
-            printf("Error: inconsistent attribute length for entry of label %s at row %d\nexpected %d found %lu", 
-                    token.c_str(), entryCount, attrLength, e->attributes.size());
+            printf("Error: inconsistent attribute length for point of label %s at row %d\nexpected %d found %lu", 
+                    token.c_str(), pointCount, attrLength, e->attributes.size());
             exit(1);
         }
 
@@ -136,7 +136,7 @@ void ReadNeighborsFromFile(const string train_file, vector<Entry*>& neighbors, s
     }
 
     vector<set<int>> tmp(attrLength);
-    for(Entry* e : neighbors){
+    for(Point* e : neighbors){
         vector<int>& v = e->attributes;
         for(int i = 0; i < attrLength; i++){
             tmp[i].insert(v[i]);
@@ -147,7 +147,7 @@ void ReadNeighborsFromFile(const string train_file, vector<Entry*>& neighbors, s
     fin.close();
 }
 
-void DisplayInput(const vector<Entry*>& neighbors){
+void DisplayInput(const vector<Point*>& neighbors){
 
     int rowcount = 0;
     printf("Input:\n");
