@@ -16,6 +16,8 @@
 
 using namespace std;
 
+#define EPSILON 1e-9
+
 extern bool DEBUG;
 
 bool SortByDistance(pair<double, string> p1, pair<double, string> p2){
@@ -42,18 +44,22 @@ string KNN_PredictLabel(Point* test_point, int k, const vector<Point*>& neighbor
     vector<pair<double, string>> distances;
     for(auto n = neighbors.begin(); n != neighbors.end(); n++){
         double distance = KNN_CalculateDistance(test_point, *n, attrLength, knn_UseEuclid);
+        if (distance < EPSILON){
+            distance = EPSILON;
+        }
         distances.push_back(make_pair(distance, (*n)->label));
     }
 
     sort(distances.begin(), distances.end(), SortByDistance);
 
-    unordered_map<string,int> votes;
+    unordered_map<string,double> votes;
     int maxVotes = 0;
     for (auto l : labels_in_train){
         votes[l] = 0;
     }
     for (int i = 0; i < k; i++){
-        votes[distances[i].second]++;
+        double weight = 1.0 / distances[i].first;
+        votes[distances[i].second] += weight;
         if(DEBUG){ printf("neighbor %d label %s\n", i, distances[i].second.c_str());}
     }
     for (auto l : labels_in_train){

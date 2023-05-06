@@ -44,7 +44,7 @@ int main(int argc, char** argv){
     string train_file;
     string test_file;
     int k_knn;
-    ALGO algo = ALGO::KMEANS;
+    ALGO algo = ALGO::BAYES;
     MODE mode;
     bool verbose = false;
     int attrLength = 0;
@@ -62,24 +62,24 @@ int main(int argc, char** argv){
     for (int i = 1; i < argc-1; i++){
     }
 
-    // train_file = "tests/1_knn1.train.txt";
-    train_file = "tests/4_ex1_train.csv";
+    train_file = "tests/1_knn1.train.txt";
+    test_file = "tests/1_knn1.test.txt";
+    // train_file = "tests/4_ex1_train.csv";
+    // test_file = "tests/4_ex1_test.csv";
     ReadNeighborsFromFile(train_file, neighbors, labels_in_train, attrLength, attributes_in_train);
     if(DEBUG){ DisplayInput(neighbors);}
 
-    // algo=ALGO::KNN;
+    algo=ALGO::KNN;
     k_knn = 3;
     knn_UseEuclid = true;
-    // test_file = "tests/1_knn1.test.txt";
     if(algo == ALGO::KNN){
         KNN_ReadPointsAndPredictLabel(test_file, neighbors, k_knn, labels_in_train, attrLength, knn_UseEuclid);
     }
 
     
-    algo = ALGO::BAYES;
+    // algo = ALGO::BAYES;
     c_laplace = 1;
     verbose = true;
-    test_file = "tests/4_ex1_test.csv";
     if (algo == ALGO::BAYES){
         NB_ReadPointsAndPredictLabel(test_file, neighbors, labels_in_train, attrLength, attributes_in_train, c_laplace, verbose);
     }
