@@ -1,8 +1,20 @@
 CC=g++
-CFLAG = -g -std=c++17
+CXXFLAGS = -g -std=c++17
 
-learn: learn.cpp
-	${CC} ${CFLAG} -o learn learn.cpp
+CPPFLAGS +=
+
+SOURCES := $(shell find . -name '*.cpp')
+
+HEADERS := $(shell find . -name '*.h')
+
+OUTPUT := learn
+
+all: $(OUTPUT)
+
+$(OUTPUT): $(SOURCES) $(HEADERS)
+	$(CC) $(CXXFLAGS) $(CPPFLAGS) -o $(OUTPUT) $(SOURCES)
 
 clean:
-	rm -f learn
+	$(RM) $(OUTPUT)
+
+
