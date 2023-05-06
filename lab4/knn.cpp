@@ -70,7 +70,7 @@ void KNN_ReadPointsAndPredictLabel(const string test_file_name, const vector<Ent
                         set<string>& labels_in_train, int& attrLength, bool knn_UseEuclid){
     ifstream fin;
     string line;
-    if(DEBUG){ printf("parsing input file: %s\n", test_file_name.c_str());}
+    if(DEBUG){ printf("reading test file: %s\n", test_file_name.c_str());}
 
     try
     {
@@ -78,15 +78,15 @@ void KNN_ReadPointsAndPredictLabel(const string test_file_name, const vector<Ent
     }
     catch(std::exception const& e)
     {
-        printf("There was an error in opening input file %s: %s\n", test_file_name.c_str(), e.what());
+        printf("There was an error in opening test file %s: %s\n", test_file_name.c_str(), e.what());
         exit(1);
     }
 
-    // labels in training data + any new labels in test data
-    set<string> all_labels = labels_in_train;
     unordered_map<string, int> predictions;
     unordered_map<string, int> true_predictions;
     unordered_map<string, int> ground_truth;
+    // labels in training data + any new labels in test data
+    set<string> all_labels = labels_in_train;
 
     for (auto l : labels_in_train){
         predictions[l] = 0;
@@ -143,4 +143,3 @@ void KNN_ReadPointsAndPredictLabel(const string test_file_name, const vector<Ent
 
     fin.close();
 }
-

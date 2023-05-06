@@ -16,5 +16,3 @@ $(OUTPUT): $(SOURCES) $(HEADERS)
 
 clean:
 	$(RM) $(OUTPUT)
-
-
