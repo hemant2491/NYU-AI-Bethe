@@ -20,30 +20,14 @@ using namespace std;
 
 extern bool DEBUG;
 
-bool SortByDistance(pair<double, string> p1, pair<double, string> p2){
-    return p1.first < p2.first;
-}
-
-double KNN_CalculateDistance(Point* e1, Point* e2, int& attrLength, bool knn_UseEuclid){
-    double distance = 0;
-    for (int i = 0; i < attrLength; i++){
-        if(knn_UseEuclid){
-            distance += pow(e1->attributes[i] - e2->attributes[i], 2);
-        } else {
-            distance += abs(e1->attributes[i] - e2->attributes[i]);
-        }
-    }
-    return distance;
-}
-
 string KNN_PredictLabel(Point* test_point, int k, const vector<Point*>& neighbors,
-                 set<string>& labels_in_train, int& attrLength, bool knn_UseEuclid){
+                 set<string>& labels_in_train, int& attrLength, bool useEuclid){
     
     string predicted_label = "";
 
     vector<pair<double, string>> distances;
     for(auto n = neighbors.begin(); n != neighbors.end(); n++){
-        double distance = KNN_CalculateDistance(test_point, *n, attrLength, knn_UseEuclid);
+        double distance = CalculateDistance(test_point, *n, attrLength, useEuclid);
         if (distance < EPSILON){
             distance = EPSILON;
         }
@@ -73,7 +57,7 @@ string KNN_PredictLabel(Point* test_point, int k, const vector<Point*>& neighbor
 }
 
 void KNN_ReadPointsAndPredictLabel(const string test_file_name, const vector<Point*>& neighbors, int k, 
-                        set<string>& labels_in_train, int& attrLength, bool knn_UseEuclid){
+                        set<string>& labels_in_train, int& attrLength, bool useEuclid, bool verbose){
     ifstream fin;
     string line;
     if(DEBUG){ printf("reading test file: %s\n", test_file_name.c_str());}
@@ -132,8 +116,10 @@ void KNN_ReadPointsAndPredictLabel(const string test_file_name, const vector<Poi
             exit(1);
         }
 
-        string predicted_label = KNN_PredictLabel(e, k, neighbors, labels_in_train, attrLength, knn_UseEuclid);
-        printf("want=%s got=%s\n", point_label.c_str(), predicted_label.c_str());
+        string predicted_label = KNN_PredictLabel(e, k, neighbors, labels_in_train, attrLength, useEuclid);
+        if (verbose){
+            printf("want=%s got=%s\n", point_label.c_str(), predicted_label.c_str());
+        }
 
         predictions[predicted_label]++;
         if(point_label == predicted_label){

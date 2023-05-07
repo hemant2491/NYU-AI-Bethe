@@ -104,26 +104,11 @@ string NB_PredictLabel(Point* test_point, const vector<Point*>& neighbors, const
 
 
 void NB_ReadPointsAndPredictLabel(const string test_file_name, const vector<Point*>& neighbors,
-                const set<string>& labels_in_train, int attrLength, const vector<set<int>>& attributes_in_train,
-                int c_laplace, bool verbose){
-
-    unordered_map<string,int> label_counts;
-    unordered_map<string,double> label_probabilities;
-
-    /* 
-    * map of class to vector of map of attribute to its count
-    * unordered_map< _label_ , vector<unordered_map< _attribute_ , _attribute_count_ >>>
-    */
-    unordered_map<string, vector<unordered_map<int,int>>> label_to_attribute_counts;
-
-    /* 
-    * map of class to vector of map of attribute to its probability
-    * unordered_map< _label_ , vector<unordered_map< _attribute_ , _attribute_probability_ >>>
-    */
-    unordered_map<string, vector<unordered_map<int,double>>> label_to_attribute_probabilities;
-
-    NB_CalculateProbabilities(neighbors, labels_in_train, attrLength, attributes_in_train, c_laplace, verbose,
-            label_counts, label_probabilities, label_to_attribute_counts, label_to_attribute_probabilities);
+            const set<string>& labels_in_train, int attrLength, const vector<set<int>>& attributes_in_train,
+            int c_laplace, bool verbose,
+            unordered_map<string,int>& label_counts, unordered_map<string,double>& label_probabilities,
+            unordered_map<string, vector<unordered_map<int,int>>>& label_to_attribute_counts,
+            unordered_map<string, vector<unordered_map<int,double>>>& label_to_attribute_probabilities){
 
     ifstream fin;
     string line;

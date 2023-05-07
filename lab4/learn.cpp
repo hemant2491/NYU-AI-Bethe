@@ -23,6 +23,7 @@
 #include "helper.h"
 #include "knn.h"
 #include "naive_bayes.h"
+#include "kmeans.h"
 
 using namespace std;
 
@@ -49,11 +50,13 @@ int main(int argc, char** argv){
     bool verbose = false;
     int attrLength = 0;
     int c_laplace = 0;
-    bool knn_UseEuclid;
+    bool useEuclid;
     set<string> labels_in_train;
     // vector of possible of values for each attribute
     vector<set<int>> attributes_in_train;
     vector<Point*> neighbors;
+    //Point 2 class can have double values for attributes
+    vector<Point2*> centroids;
 
     // inputFile = argv[argc-1];
     inputFile = "tests/1_knn1.train.txt";
@@ -62,26 +65,66 @@ int main(int argc, char** argv){
     for (int i = 1; i < argc-1; i++){
     }
 
-    train_file = "tests/1_knn1.train.txt";
-    test_file = "tests/1_knn1.test.txt";
+    // train_file = "tests/1_knn1.train.txt";
+    // test_file = "tests/1_knn1.test.txt";
     // train_file = "tests/4_ex1_train.csv";
     // test_file = "tests/4_ex1_test.csv";
+    train_file = "tests/6_km1.txt";
     ReadNeighborsFromFile(train_file, neighbors, labels_in_train, attrLength, attributes_in_train);
     if(DEBUG){ DisplayInput(neighbors);}
 
-    algo=ALGO::KNN;
-    k_knn = 3;
-    knn_UseEuclid = true;
+    // algo=ALGO::KNN;
     if(algo == ALGO::KNN){
-        KNN_ReadPointsAndPredictLabel(test_file, neighbors, k_knn, labels_in_train, attrLength, knn_UseEuclid);
+        k_knn = 3;
+        verbose = true;
+
+
+        useEuclid = true;
+        KNN_ReadPointsAndPredictLabel(test_file, neighbors, k_knn, labels_in_train, attrLength, useEuclid, verbose);
     }
 
-    
+    algo = ALGO::KMEANS;
     // algo = ALGO::BAYES;
-    c_laplace = 1;
-    verbose = true;
     if (algo == ALGO::BAYES){
-        NB_ReadPointsAndPredictLabel(test_file, neighbors, labels_in_train, attrLength, attributes_in_train, c_laplace, verbose);
+        c_laplace = 1;
+        verbose = true;
+
+
+        unordered_map<string,int> label_counts;
+        unordered_map<string,double> label_probabilities;
+
+        /*
+        * map of class to vector of map of attribute to its count
+        * unordered_map< _label_ , vector<unordered_map< _attribute_ , _attribute_count_ >>>
+        */
+        unordered_map<string, vector<unordered_map<int,int>>> label_to_attribute_counts;
+
+        /*
+        * map of class to vector of map of attribute to its probability
+        * unordered_map< _label_ , vector<unordered_map< _attribute_ , _attribute_probability_ >>>
+        */
+        unordered_map<string, vector<unordered_map<int,double>>> label_to_attribute_probabilities;
+
+        //training step
+        NB_CalculateProbabilities(neighbors, labels_in_train, attrLength, attributes_in_train, c_laplace, verbose,
+                label_counts, label_probabilities, label_to_attribute_counts, label_to_attribute_probabilities);
+
+        NB_ReadPointsAndPredictLabel(test_file, neighbors, labels_in_train, attrLength,
+                attributes_in_train, c_laplace, verbose, label_counts,
+                label_probabilities, label_to_attribute_counts, label_to_attribute_probabilities);
+    }
+
+    algo = ALGO::KMEANS;
+    if (algo == ALGO::KMEANS){
+        // (0,0) (200,200) (500,500)
+        Point2* p1 = new Point2(); Point2* p2 = new Point2(); Point2* p3 = new Point2();
+        p1->label = "_"; p1->attributes.push_back(0); p1->attributes.push_back(0);
+        p2->label = "_"; p2->attributes.push_back(200); p2->attributes.push_back(200);
+        p3->label = "_"; p3->attributes.push_back(500); p3->attributes.push_back(500);
+
+        centroids.push_back(p1); centroids.push_back(p2); centroids.push_back(p3);
+
+        KMEANS_SOLVE(centroids, neighbors, attrLength, verbose, useEuclid);
     }
 
     return 0;

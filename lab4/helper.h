@@ -11,6 +11,14 @@ public:
     Point(){}
 };
 
+//Point 2 class can have double values for attributes
+class Point2{
+public:
+    string label = "";
+    vector<double> attributes;
+    Point2(){}
+};
+
 enum ALGO{
     BAYES,
     KNN,
@@ -56,4 +64,36 @@ static inline void rtrim(std::string &s){
 static inline void trim(std::string &s){
     rtrim(s);
     ltrim(s);
+}
+
+static bool SortByDistance(pair<double, string> p1, pair<double, string> p2){
+    return p1.first < p2.first;
+}
+
+static double CalculateDistance(Point* e1, Point* e2, int& attrLength, bool useEuclid){
+    double distance = 0;
+    for (int i = 0; i < attrLength; i++){
+        if(useEuclid){
+            distance += pow(e1->attributes[i] - e2->attributes[i], 2);
+        } else {
+            distance += abs(e1->attributes[i] - e2->attributes[i]);
+        }
+    }
+    return distance;
+}
+
+static double CalculateDistanceFromCentroid(Point2* c1, Point* e2, int& attrLength, bool useEuclid){
+    double distance = 0;
+    for (int i = 0; i < attrLength; i++){
+        if(useEuclid){
+            distance += pow(c1->attributes[i] - e2->attributes[i], 2);
+        } else {
+            distance += abs(c1->attributes[i] - e2->attributes[i]);
+        }
+    }
+    return distance;
+}
+
+static bool SortByFirstAttribute(pair<int, Point2*> c1, pair<int, Point2*> c2){
+    return c1.second->attributes[0] < c2.second->attributes[0];
 }
