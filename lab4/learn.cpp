@@ -27,7 +27,7 @@
 
 using namespace std;
 
-bool DEBUG = false;
+bool DEBUG = true;
 
 void ReadNeighborsFromFile(const string train_file, vector<Point*>& neighbors, set<string>& labels_in_train, int& attrLength, vector<set<int>>& attributes_in_train);
 void DisplayInput(const vector<Point*>& neighbors);
