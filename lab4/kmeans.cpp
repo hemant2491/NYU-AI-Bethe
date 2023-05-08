@@ -117,6 +117,11 @@ void KMEANS_SOLVE(vector<Point2*>& centroids, const vector<Point*>& neighbors,
         // if(DEBUG){ PrintClusterStats(clusters);}
     }
 
+    /*
+    * new centorid data structure to sort cebtroids by first attribute
+    * each pair in centorid vector is the centroid point and its original id
+    * we need original id to match corresponding cluster
+    */
     vector<pair<int, Point2*>> centroid_with_id;
 
     for (int i = 0; i < centroids.size(); i++){
@@ -126,17 +131,15 @@ void KMEANS_SOLVE(vector<Point2*>& centroids, const vector<Point*>& neighbors,
     sort(centroid_with_id.begin(), centroid_with_id.end(), SortByFirstAttribute);
 
     for (int i = 0; i < centroid_with_id.size(); i++){
-        printf("C%d = {", i);
+        printf("C%d = {", i+1);
         bool first = true;
-        set<string> cluster_labels;
-        for (Point* p : clusters[centroid_with_id[i].first]){
-            cluster_labels.insert(p->label);
-        }
-        for(auto l : cluster_labels){
+        vector<Point*> cluster_points = clusters[centroid_with_id[i].first];
+        sort(cluster_points.begin(), cluster_points.end(), SortById);
+        for(int j = 0; j < cluster_points.size(); j++){
             if(!first){
-                printf(",%s", l.c_str());
+                printf(",%s", cluster_points[j]->label.c_str());
             } else {
-                printf("%s", l.c_str());
+                printf("%s", cluster_points[j]->label.c_str());
                 first = false;
             }
         }
@@ -148,10 +151,10 @@ void KMEANS_SOLVE(vector<Point2*>& centroids, const vector<Point*>& neighbors,
         bool first = true;
         for(auto a : centroid_with_id[i].second->attributes){
             if (first){
-                printf("%.12lf", a);
+                printf("%.13lf", a);
                 first = false;
             } else {
-                printf(" %.12lf", a);
+                printf(" %.13lf", a);
             }
         }
         printf("])\n");

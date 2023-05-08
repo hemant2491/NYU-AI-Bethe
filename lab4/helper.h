@@ -9,6 +9,7 @@ class Point{
 public:
     string label = "";
     vector<int> attributes;
+    int id = -1;
     Point(){}
 };
 
@@ -67,10 +68,6 @@ static inline void trim(std::string &s){
     ltrim(s);
 }
 
-static bool SortByDistance(pair<double, string> p1, pair<double, string> p2){
-    return p1.first < p2.first;
-}
-
 static double CalculateDistance(Point* e1, Point* e2, int& attrLength, bool useEuclid){
     double distance = 0;
     for (int i = 0; i < attrLength; i++){
@@ -88,10 +85,6 @@ static double CalculateDistanceFromCentroid(Point2* c1, Point* e2, int& attrLeng
     for (int i = 0; i < attrLength; i++){
         if(useEuclid){
             distance += pow((c1->attributes[i] - ((double)e2->attributes[i])), 2);
-            // printf("\nc1 %.4lf p1 %d distance += %.4lf\n",
-            //         c1->attributes[i],
-            //         e2->attributes[i],
-            //         pow((c1->attributes[i] - ((double)e2->attributes[i])), 2));
         } else {
             distance += abs(c1->attributes[i] - ((double)e2->attributes[i]));
         }
@@ -99,6 +92,14 @@ static double CalculateDistanceFromCentroid(Point2* c1, Point* e2, int& attrLeng
     return distance;
 }
 
+static bool SortByDistance(pair<double, string> p1, pair<double, string> p2){
+    return p1.first < p2.first;
+}
+
 static bool SortByFirstAttribute(pair<int, Point2*> c1, pair<int, Point2*> c2){
     return c1.second->attributes[0] < c2.second->attributes[0];
+}
+
+static bool SortById(Point* p1, Point* p2){
+    return p1->id < p2->id;
 }

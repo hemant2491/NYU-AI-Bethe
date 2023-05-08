@@ -26,7 +26,7 @@
 
 using namespace std;
 
-bool DEBUG = true;
+bool DEBUG = false;
 
 void ReadNeighborsFromFile(const string train_file, vector<Point*>& neighbors, set<string>& labels_in_train, int& attrLength, vector<set<int>>& attributes_in_train);
 void DisplayInput(const vector<Point*>& neighbors);
@@ -165,6 +165,7 @@ void ReadNeighborsFromFile(const string train_file, vector<Point*>& neighbors, s
         while(getline(s, token, ',')){
             trim(token);
             e->attributes.push_back(stoi(token));
+            e->id = pointCount;
         }
 
         if (attrLength == 0){
