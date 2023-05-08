@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <algorithm>
+#include <math.h>
 
 using namespace std;
 
@@ -83,12 +84,16 @@ static double CalculateDistance(Point* e1, Point* e2, int& attrLength, bool useE
 }
 
 static double CalculateDistanceFromCentroid(Point2* c1, Point* e2, int& attrLength, bool useEuclid){
-    double distance = 0;
+    double distance = 0.0;
     for (int i = 0; i < attrLength; i++){
         if(useEuclid){
-            distance += pow(c1->attributes[i] - e2->attributes[i], 2);
+            distance += pow((c1->attributes[i] - ((double)e2->attributes[i])), 2);
+            // printf("\nc1 %.4lf p1 %d distance += %.4lf\n",
+            //         c1->attributes[i],
+            //         e2->attributes[i],
+            //         pow((c1->attributes[i] - ((double)e2->attributes[i])), 2));
         } else {
-            distance += abs(c1->attributes[i] - e2->attributes[i]);
+            distance += abs(c1->attributes[i] - ((double)e2->attributes[i]));
         }
     }
     return distance;

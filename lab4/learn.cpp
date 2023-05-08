@@ -18,7 +18,6 @@
 #include <float.h>
 #include <limits.h>
 #include <sstream>
-#include <cmath>
 
 #include "helper.h"
 #include "knn.h"
@@ -70,6 +69,7 @@ int main(int argc, char** argv){
     // train_file = "tests/4_ex1_train.csv";
     // test_file = "tests/4_ex1_test.csv";
     train_file = "tests/6_km1.txt";
+    useEuclid = true;
     ReadNeighborsFromFile(train_file, neighbors, labels_in_train, attrLength, attributes_in_train);
     if(DEBUG){ DisplayInput(neighbors);}
 

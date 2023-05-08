@@ -1,10 +1,22 @@
 #include "kmeans.h"
 extern bool DEBUG;
 
-void PrintClusterStats(vector<Point2*>& centroids, unordered_map<int, vector<Point*>>& clusters){
+void PrintCentroids(const vector<Point2*>& centroids){
+    printf("Centroids(%lu)\n", centroids.size());
+    for(int i = 0; i < centroids.size(); i++){
+        printf("%d->", i);
+        vector<double> attrs = centroids[i]->attributes;
+        for(auto j = 0; j < attrs.size(); j++){
+            printf(" %.4lf", attrs[j]);
+        }
+        printf("\n");
+    }
+}
+
+void PrintClusterStats(unordered_map<int, vector<Point*>>& clusters){
     if(DEBUG){
         printf("Clusters map size: %lu\n", clusters.size());
-        for (int i = 0; i < centroids.size(); i++){
+        for (int i = 0; i < clusters.size(); i++){
             printf("Cluster %d: %lu\n", i, clusters[i].size());
         }
     }
@@ -12,15 +24,16 @@ void PrintClusterStats(vector<Point2*>& centroids, unordered_map<int, vector<Poi
 
 void KMEANS_ReCalculateCentroids(vector<Point2*>& centroids, unordered_map<int, vector<Point*>>& clusters, int attrLength){
     for (int i = 0; i < centroids.size(); i++){
+        if(clusters[i].size() < 1){ continue;}
         for (int j = 0; j < attrLength; j++){
-            double initial_val = centroids[i]->attributes[j];
-            double attr_val = 1 / clusters[i].size();
+            double attr_sum = 0.0 ;
             for(Point* p : clusters[i]){
-                attr_val *= p->attributes[j];
+                attr_sum += p->attributes[j];
             }
-            centroids[i]->attributes[j] = attr_val;
+            centroids[i]->attributes[j] = ((double) attr_sum) / clusters[i].size();
         }
     }
+    if(DEBUG){ PrintCentroids(centroids);}
 }
 
 bool KMEANS_ReAssignClusters(vector<Point2*>& centroids, unordered_map<int, vector<Point*>>& clusters,
@@ -29,30 +42,33 @@ bool KMEANS_ReAssignClusters(vector<Point2*>& centroids, unordered_map<int, vect
     bool changed = false;
 
     unordered_map<int, vector<Point*>> tmp_clusters;
-    for(int i = 0; i < centroids.size(); i++){
+    for(int i = 0; i < clusters.size(); i++){
         vector<Point*> tmp_v;
         tmp_clusters[i] = tmp_v;
     }
 
-    for (int i = 0; i < centroids.size(); i++){
+    for (int i = 0; i < clusters.size(); i++){
         for (Point* p : clusters[i]){
-            int cluster_id = -1;
+            int new_cluster_id = i;
             double min_distance = INT_MAX;
-            for (int i = 0; i < centroids.size(); i++){
-                double distance = CalculateDistanceFromCentroid(centroids[i], p, attrLength, useEuclid);
+            if(DEBUG){ printf("%s->", p->label.c_str());}
+            for (int j = 0; j < centroids.size(); j++){
+                double distance = CalculateDistanceFromCentroid(centroids[j], p, attrLength, useEuclid);
+                if(DEBUG){ printf(" %d %.12lf", j, distance);}
                 if (distance < min_distance){
                     min_distance = distance;
-                    cluster_id = i;
+                    new_cluster_id = j;
                 }
             }
-            tmp_clusters[cluster_id].push_back(p);
-            if (cluster_id != i){
+            if(DEBUG){ printf("\n");}
+            tmp_clusters[new_cluster_id].push_back(p);
+            if (new_cluster_id != i){
                 changed = true;
             }
         }
     }
 
-    if(DEBUG){ PrintClusterStats(centroids, tmp_clusters);}
+    if(DEBUG){ PrintClusterStats(tmp_clusters);}
 
     clusters = tmp_clusters;
 
@@ -67,34 +83,38 @@ void KMEANS_SOLVE(vector<Point2*>& centroids, const vector<Point*>& neighbors,
         vector<Point*> tmp_v;
         clusters[i] = tmp_v;
     }
+    if(DEBUG){ PrintCentroids(centroids);}
 
     for (Point* p : neighbors){
-        int cluster_id = -1;
+        int new_cluster_id = 0;
         double min_distance = INT_MAX;
+        if(DEBUG){ printf("%s->", p->label.c_str());}
         for (int i = 0; i < centroids.size(); i++){
             double distance = CalculateDistanceFromCentroid(centroids[i], p, attrLength, useEuclid);
+            if(DEBUG){ printf(" %d %.4lf", i, distance);}
             if (distance < min_distance){
                 min_distance = distance;
-                cluster_id = i;
+                new_cluster_id = i;
             }
         }
-        clusters[cluster_id].push_back(p);
+        if(DEBUG){ printf("\n");}
+        clusters[new_cluster_id].push_back(p);
     }
 
-    if(DEBUG){ PrintClusterStats(centroids, clusters);}
+    if(DEBUG){ PrintClusterStats(clusters);}
     
     KMEANS_ReCalculateCentroids(centroids, clusters, attrLength);
-    // if(DEBUG){ PrintClusterStats(centroids, clusters);}
+    // if(DEBUG){ PrintClusterStats(clusters);}
 
     bool changed = true;
 
     while (changed){
         changed = KMEANS_ReAssignClusters(centroids, clusters, attrLength, useEuclid);
-        // if(DEBUG){ PrintClusterStats(centroids, clusters);}
+        // if(DEBUG){ PrintClusterStats(clusters);}
         if(changed){
             KMEANS_ReCalculateCentroids(centroids, clusters, attrLength);
         }
-        // if(DEBUG){ PrintClusterStats(centroids, clusters);}
+        // if(DEBUG){ PrintClusterStats(clusters);}
     }
 
     vector<pair<int, Point2*>> centroid_with_id;
