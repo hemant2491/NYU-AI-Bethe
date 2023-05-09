@@ -21,7 +21,7 @@ Please Note:
 		Label=A Precision=2/3 Recall=2/3
 		Label=B Precision=2/3 Recall=2/3
 
-3. Similary, we have verbose for Naive Bayes where the output of my implementation, is same as provided outputs:
+2. Naive Bayes: Similary, we have verbose for Naive Bayes where the output of my implementation, is same as provided outputs:
 	a. Without verbose:
 		Label=F Precision=0/0 Recall=0/1
 		Label=T Precision=1/2 Recall=1/1
@@ -51,7 +51,7 @@ Please Note:
 		Label=F Precision=0/0 Recall=0/1
 		Label=T Precision=1/2 Recall=1/1
 
-3. In case of KMeans the output values matches the provided output but would have different precision.
+3. KMeans: In case of KMeans the output values matches the provided output but would have different precision.
 My code is in C++ and I have set the precision to 13 decimal places, whereas provided outputs varies in precision.
 	- Provided output:
 		([562.125 1213.625 522.34375])
