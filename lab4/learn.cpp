@@ -61,7 +61,7 @@ int main(int argc, char** argv){
     set<string> labels_in_train;
     // vector of possible of values for each attribute
     vector<set<int>> attributes_in_train;
-    /* Centroids for KMeans Algorithm*/
+    /* Centroids for KMeans Algorithm */
     vector<Point2*> centroids;
 
     for (int i = 0; i < argc; i++){

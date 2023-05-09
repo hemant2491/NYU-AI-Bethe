@@ -11,6 +11,8 @@
 #include <limits.h>
 #include <sstream>
 #include <cmath>
+#include <vector>
+#include <set>
 
 #include "knn.h"
 

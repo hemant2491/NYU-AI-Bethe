@@ -3,6 +3,9 @@
 #include <string>
 #include <fstream>
 #include <sstream>
+#include <set>
+#include <string>
+#include <unordered_map>
 
 #include "knn.h"
 

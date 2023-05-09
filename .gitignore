@@ -31,4 +31,14 @@
 *.out
 *.app
 
+# mac hidden and tmp files
 .DS_Store
+*.dSYM
+*tmp
+*.swp
+*.swap
+
+# zips, pdfs and excel files
+*.pdf
+*.xlsx
+*.zip

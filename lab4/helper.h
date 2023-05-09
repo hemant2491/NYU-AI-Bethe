@@ -45,7 +45,12 @@ static void PrintUsage(string error){
     printf("\t• arguments: if a list of centroids is provided those should be used for kMeans\n");
     printf("\nNote: it is illegal for both K and C to be greater than 0\n");
     printf("\nExample:\n");
-    printf("\t./learn -train some-input.txt 0,500 200,200 1000,1000\n");
+    printf("\t./learn -train tests/1_knn1.train.txt -test tests/1_knn1.test.txt -K 3 -v\n");
+    printf("\t./learn -train tests/1_knn1.train.txt -test tests/1_knn1.test.txt -K 3 -v\n");
+    printf("\t./learn -train tests/4_ex1_train.csv -test tests/4_ex1_test.csv -C 0\n");
+    printf("\t./learn -train tests/4_ex1_train.csv -test tests/4_ex1_test.csv -C 1 -v\n");
+    printf("\t./learn -train tests/6_km1.txt -d e2 0,0 200,200 500,500\n");
+    printf("\t./learn -train tests/7_km2.txt -d manh 0,0,0 200,200,200 500,500,500\n");
 }
 
 // trim whitespace from start of string

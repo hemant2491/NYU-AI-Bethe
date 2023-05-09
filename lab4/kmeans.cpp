@@ -1,4 +1,17 @@
 #include "kmeans.h"
+
+#include <iostream>
+#include <string>
+#include <vector>
+#include <set>
+#include <fstream>
+#include <cstring>
+#include <algorithm>
+#include <float.h>
+#include <limits.h>
+#include <sstream>
+#include <unordered_map>
+
 extern bool DEBUG;
 
 void PrintCentroids(const vector<Point2*>& centroids){
@@ -104,17 +117,14 @@ void KMEANS_SOLVE(vector<Point2*>& centroids, const vector<Point*>& neighbors,
     if(DEBUG){ PrintClusterStats(clusters);}
     
     KMEANS_ReCalculateCentroids(centroids, clusters, attrLength);
-    // if(DEBUG){ PrintClusterStats(clusters);}
 
     bool changed = true;
 
     while (changed){
         changed = KMEANS_ReAssignClusters(centroids, clusters, attrLength, useEuclid);
-        // if(DEBUG){ PrintClusterStats(clusters);}
         if(changed){
             KMEANS_ReCalculateCentroids(centroids, clusters, attrLength);
         }
-        // if(DEBUG){ PrintClusterStats(clusters);}
     }
 
     /*
