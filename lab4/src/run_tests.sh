@@ -27,7 +27,12 @@ rm -rf tmp/outs/*
 
 cd tests
 
+echo "Entered $(pwd)"
+
 for i in `ls *.out.txt` ; do echo $i ; diff ./$i ../tmp/outs/$i ; echo ; done
 for i in `ls *.out` ; do echo $i ; diff ./$i ../tmp/outs/$i ; echo ; done
 
 cd ../
+
+echo "Back in $(pwd)"
+ 
