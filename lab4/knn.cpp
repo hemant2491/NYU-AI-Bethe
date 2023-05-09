@@ -37,16 +37,18 @@ string KNN_PredictLabel(Point* test_point, int k, const vector<Point*>& neighbor
     sort(distances.begin(), distances.end(), SortByDistance);
 
     unordered_map<string,double> votes;
-    int maxVotes = 0;
+    double maxVotes = 0.0;
     for (auto l : labels_in_train){
         votes[l] = 0;
     }
     for (int i = 0; i < k; i++){
         double weight = 1.0 / distances[i].first;
         votes[distances[i].second] += weight;
-        if(DEBUG){ printf("neighbor %d label %s\n", i, distances[i].second.c_str());}
+        if(DEBUG){ printf("neighbor %d label %s weight %.4lf\n", i, distances[i].second.c_str(), weight);}
     }
+    if(DEBUG){ printf("Votes:\n");}
     for (auto l : labels_in_train){
+        if(DEBUG){ printf("%s: %.4lf\n", l.c_str(), votes[l]);}
         if(votes[l] > maxVotes){
             maxVotes = votes[l];
             predicted_label = l;
