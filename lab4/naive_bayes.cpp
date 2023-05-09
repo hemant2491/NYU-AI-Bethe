@@ -46,15 +46,22 @@ void NB_CalculateProbabilities(const vector<Point*>& neighbors, const set<string
         auto label_attr_counts_map_vec_iter = label_to_attribute_counts[l].begin();
         auto label_attr_probs_map_vec_iter = label_to_attribute_probabilities[l].begin();
         auto attr_value_vec_iter = attributes_in_train.begin();
-        int attr_indx = -1;
+        int attr_indx = 0;
 
         for (; label_attr_counts_map_vec_iter != label_to_attribute_counts[l].end(); 
-            label_attr_counts_map_vec_iter++, label_attr_probs_map_vec_iter++, attr_value_vec_iter++){
+            label_attr_counts_map_vec_iter++, label_attr_probs_map_vec_iter++, attr_value_vec_iter++, attr_indx++){
             
             for(auto attr_value : (*attr_value_vec_iter)){
                 double numerator = ((double) ((*label_attr_counts_map_vec_iter)[attr_value] + c_laplace));
-                double denominator = (double) (label_counts[l] + (labels_in_train.size() * c_laplace));
+                double denominator = (double) (label_counts[l] + ((*label_attr_counts_map_vec_iter).size() * c_laplace));
                 (*label_attr_probs_map_vec_iter)[attr_value] = ((double) numerator) / denominator;
+                if(DEBUG){
+                    printf("(debug)P(A%d=%d|C=%s) = (%d + %d) / (%d + (%lu * %d)) = %.6lf\n",
+                    attr_indx, attr_value, l.c_str(),
+                    (*label_attr_counts_map_vec_iter)[attr_value], c_laplace,
+                    label_counts[l], (*label_attr_counts_map_vec_iter).size(), c_laplace,
+                    (*label_attr_probs_map_vec_iter)[attr_value]);
+                }
             }
         }
     }
@@ -73,6 +80,8 @@ string NB_PredictLabel(Point* test_point, const vector<Point*>& neighbors, const
 
     for (auto label : labels_in_train){
         double tmp_probability = label_probabilities[label];
+        stringstream debug_str;
+        if(DEBUG){ debug_str << "(debug)NB(C=" << label << ") = " << tmp_probability;}
         if(verbose){
             printf("P(C=%s) = [%d / %lu]\n", label.c_str(), label_counts[label], neighbors.size());
         }
@@ -80,8 +89,13 @@ string NB_PredictLabel(Point* test_point, const vector<Point*>& neighbors, const
             int attr_value = test_point->attributes[attr_idx];
             tmp_probability *= label_to_attribute_probabilities[label][attr_idx][attr_value];
             if (verbose){
-                printf("P(A%d=%d | C=%s) = %d / %lu\n", attr_idx, attr_value, label.c_str(), (label_to_attribute_counts[label][attr_idx][attr_value]+c_laplace), (label_counts[label] + (labels_in_train.size()*c_laplace)));
+                printf("P(A%d=%d | C=%s) = %d / %lu\n", attr_idx, attr_value, label.c_str(), (label_to_attribute_counts[label][attr_idx][attr_value]+c_laplace), (label_counts[label] + ((label_to_attribute_counts[label][attr_idx]).size()*c_laplace)));
             }
+            if(DEBUG){ debug_str << " * " << label_to_attribute_probabilities[label][attr_idx][attr_value];}
+        }
+        if(DEBUG){
+            debug_str << " = " << tmp_probability;
+            printf("%s\n", debug_str.str().c_str());
         }
         per_class_probabilities[label] = tmp_probability;
     }
