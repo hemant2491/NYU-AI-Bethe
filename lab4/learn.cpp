@@ -34,62 +34,147 @@ void DisplayInput(const vector<Point*>& neighbors);
 
 int main(int argc, char** argv){
 
-    // if(argc < 2){
-    //     PrintUsage("Incorrect number of program arguments " + to_string(argc));
-    //     exit(1);
-    // }
+    if(argc < 2){
+        PrintUsage("Missing program arguments");
+        exit(1);
+    }
     if(DEBUG){ printf("argc %d\n", argc);}
 
-    string inputFile;
+    bool verbose = false;
+    bool read_train_file = false;
+    bool read_test_file = false;
+    bool read_K = false;
+    bool read_LC = false;
+    bool read_d = false;
+    bool read_centroids = false;
     string train_file;
     string test_file;
-    int k_knn;
     ALGO algo = ALGO::BAYES;
     MODE mode;
-    bool verbose = false;
+    int k_knn = 0;
     int attrLength = 0;
     int c_laplace = 0;
-    bool useEuclid;
+    bool useEuclid = true;
+    // All points from the Training data file
+    vector<Point*> neighbors;
+    // All labels in Traing data file
     set<string> labels_in_train;
     // vector of possible of values for each attribute
     vector<set<int>> attributes_in_train;
-    vector<Point*> neighbors;
-    //Point 2 class can have double values for attributes
+    /* Centroids for KMeans Algorithm*/
     vector<Point2*> centroids;
 
-    // inputFile = argv[argc-1];
-    inputFile = "tests/1_knn1.train.txt";
-    if(DEBUG){ printf("input file %s\n", inputFile.c_str());}
+    for (int i = 0; i < argc; i++){
+        if(DEBUG) { printf("%s ", argv[i]);}
+        try{
+            if(read_train_file){
+                train_file = argv[i];
+                if(DEBUG){ printf("train file %s\n", train_file.c_str());}
+                read_train_file = false;
+                continue;
+            } else if (read_test_file){
+                test_file = argv[i];
+                if(DEBUG){ printf("test file %s\n", test_file.c_str());}
+                read_test_file = false;
+                continue;
+            } else if(read_K){
+                k_knn = stoi(argv[i]);
+                read_K = false;
+                continue;
+            } else if(read_LC){
+                c_laplace = stoi(argv[i]);
+                read_LC = false;
+                continue;
+            } else if(read_d){
+                string tmp_d_str = argv[i];
+                if(tmp_d_str == "e2"){
+                    useEuclid = true;
+                } else if(tmp_d_str == "manh"){
+                    useEuclid = false;
+                } else{
+                    PrintUsage("Incorrect value for distance argument " + tmp_d_str);
+                    exit(1);
+                }
+                read_d = false;
+                continue;
+            } else if(read_centroids){
+                Point2* p = new Point2();
+                p->label = "_";
+                string tmp_ctr_str = argv[i];
+                stringstream ss(tmp_ctr_str);
+                string tmp_attr = "";
+                while(getline(ss, tmp_attr, ',')){
+                    trim(tmp_attr);
+                    p->attributes.push_back(stoi(tmp_attr));
+                }
+                centroids.push_back(p);
+            }
+        } catch(std::exception const& e){
+            string wrongArgument = read_K ? "-K " : (read_LC ? "-C " : (read_d ? "-d " : "centroid "));
+            PrintUsage("Incorrect argument: " + wrongArgument + string(argv[i]));
+            exit(1);
+        }
 
-    for (int i = 1; i < argc-1; i++){
+        string arg_str = argv[i];
+        if(arg_str == "-train"){
+            read_train_file = true;
+            continue;
+        } else if (arg_str == "-test"){
+            read_test_file = true;
+            continue;
+        } else if(arg_str == "-K"){
+            read_K = true;
+            continue;
+        } else if(arg_str == "-C"){
+            read_LC = true;
+            continue;
+        } else if(arg_str == "-v"){
+            verbose = true;
+            continue;
+        } else if(arg_str == "-d"){
+            read_d = true;
+            read_centroids = true;
+            algo = ALGO::KMEANS;
+            continue;
+        } else if(arg_str == "-debug"){
+            DEBUG = true;
+        }
+    }
+    if(DEBUG){ printf("\n");}
+
+    if (k_knn > 0){
+        algo = ALGO::KNN;
+        useEuclid = true;
     }
 
-    // train_file = "tests/1_knn1.train.txt";
-    // test_file = "tests/1_knn1.test.txt";
-    // train_file = "tests/4_ex1_train.csv";
-    // test_file = "tests/4_ex1_test.csv";
-    train_file = "tests/6_km1.txt";
-    useEuclid = true;
+    if(read_train_file || read_test_file || read_K || read_LC || read_d){
+        PrintUsage("Missing Arguments");
+        exit(1);
+    } else if(train_file == ""){
+        PrintUsage("Training data file not provided");
+        exit(1);
+    } else if(test_file == "" && algo != ALGO::KMEANS){
+        PrintUsage("Test data file not provided");
+        exit(1);
+    } else if(k_knn > 0 and c_laplace > 0){
+        PrintUsage("it is illegal for both K and C to be greater than 0");
+        exit(1);
+    }
+
     ReadNeighborsFromFile(train_file, neighbors, labels_in_train, attrLength, attributes_in_train);
     if(DEBUG){ DisplayInput(neighbors);}
 
-    // algo=ALGO::KNN;
     if(algo == ALGO::KNN){
-        k_knn = 3;
-        verbose = true;
-
-
-        useEuclid = true;
+        if(DEBUG){
+            printf("Running KNN with\ntrain file %s test file %s k %d verbose %s\n",
+                    train_file.c_str(),
+                    test_file.c_str(),
+                    k_knn,
+                    (verbose ? "true" : "false"));
+        }
         KNN_ReadPointsAndPredictLabel(test_file, neighbors, k_knn, labels_in_train, attrLength, useEuclid, verbose);
-    }
 
-    algo = ALGO::KMEANS;
-    // algo = ALGO::BAYES;
-    if (algo == ALGO::BAYES){
-        c_laplace = 1;
-        verbose = true;
-
-
+    } else if (algo == ALGO::BAYES){
         unordered_map<string,int> label_counts;
         unordered_map<string,double> label_probabilities;
 
@@ -112,18 +197,8 @@ int main(int argc, char** argv){
         NB_ReadPointsAndPredictLabel(test_file, neighbors, labels_in_train, attrLength,
                 attributes_in_train, c_laplace, verbose, label_counts,
                 label_probabilities, label_to_attribute_counts, label_to_attribute_probabilities);
-    }
 
-    algo = ALGO::KMEANS;
-    if (algo == ALGO::KMEANS){
-        // (0,0) (200,200) (500,500)
-        Point2* p1 = new Point2(); Point2* p2 = new Point2(); Point2* p3 = new Point2();
-        p1->label = "_"; p1->attributes.push_back(0); p1->attributes.push_back(0);
-        p2->label = "_"; p2->attributes.push_back(200); p2->attributes.push_back(200);
-        p3->label = "_"; p3->attributes.push_back(500); p3->attributes.push_back(500);
-
-        centroids.push_back(p1); centroids.push_back(p2); centroids.push_back(p3);
-
+    } else if (algo == ALGO::KMEANS){
         KMEANS_SOLVE(centroids, neighbors, attrLength, verbose, useEuclid);
     }
 

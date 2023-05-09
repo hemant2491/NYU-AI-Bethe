@@ -14,16 +14,17 @@ $ g++ -g -std=c++17  -o learn ./learn.cpp ./naive_bayes.cpp ./knn.cpp ./kmeans.c
 
 
 Usage:
-	./learn -train <training_file> [-test <test_file>] -K <nof_nearest_neighbors> -C <Laplacian_correction> [-v] [-d e2|manh] <input-file.txt> [[x0,y0], [x1,y2], ...]
+	./learn -train <training_file> [-test <test_file>] -K <nof_nearest_neighbors> -C <Laplacian_correction> [-v] [-d e2|manh] [[x0,y0], [x1,y2], ...]
 
 	• -train: the training file
 	• -test: the testing data file (not used in kMeans)
 	• -K: if > 0 indicates to use kNN and also the value of K (if 0, do Naive Bayes')
 	• -C: if > 0 indicates the Laplacian correction to use (0 means don't use one)
 	• -v: [optional] verbose flag that outputs each predicted vs actual label
-	• -d: possible values 'e2' or 'manh' indicating euclidean distance squared or manhattan distance to use
+	• -d: mandatory flag for KMeans, possible values 'e2' or 'manh' indicating euclidean distance squared or manhattan distance to use
 	• arguments: if a list of centroids is provided those should be used for kMeans
-	• Note: it is illegal for both K and C to be greater than 0
+
+Note: it is illegal for both K and C to be greater than 0
 
 
 Example:
